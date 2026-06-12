@@ -1,4 +1,5 @@
 ---
+const chapterId = Astro.url.searchParams.get('id');
 ---
 
 <!DOCTYPE html>
@@ -6,16 +7,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>小说目录 - 冰箱里的世界</title>
+    <title>阅读 - 冰箱里的世界</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Serif SC", serif;
         background: #faf9f7;
         color: #333;
-        line-height: 1.6;
+        line-height: 1.8;
       }
-      .container { max-width: 800px; margin: 0 auto; padding: 0 1.5rem; }
+      .container { max-width: 700px; margin: 0 auto; padding: 0 1.5rem; }
       
       header {
         padding: 1.5rem 0;
@@ -23,32 +24,40 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        position: sticky;
+        top: 0;
+        background: #faf9f7;
       }
       .logo { font-size: 1.25rem; font-weight: 600; color: #222; text-decoration: none; }
       .nav a { color: #666; text-decoration: none; margin-left: 1.5rem; font-size: 0.875rem; }
       
-      .hero { text-align: center; padding: 3rem 0 2rem; }
-      .hero h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-      .hero p { color: #666; }
-      
-      .chapter-list { margin: 2rem 0 4rem; }
-      
-      .chapter-item {
-        background: #fff;
-        border: 1px solid #e5e5e5;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        cursor: pointer;
-        transition: box-shadow 0.2s;
+      .chapter-title {
+        text-align: center;
+        padding: 3rem 0 2rem;
+        font-size: 1.75rem;
+        font-weight: 600;
       }
-      .chapter-item:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      }
-      .chapter-item h3 { font-size: 1.125rem; margin-bottom: 0.5rem; }
-      .chapter-item .meta { color: #999; font-size: 0.75rem; }
       
-      .empty { text-align: center; padding: 4rem 2rem; color: #999; }
+      .chapter-content {
+        font-size: 1.125rem;
+        line-height: 2;
+        color: #444;
+        padding-bottom: 4rem;
+        white-space: pre-wrap;
+      }
+      
+      .nav-bottom {
+        display: flex;
+        justify-content: space-between;
+        padding: 2rem 0 4rem;
+        border-top: 1px solid #e5e5e5;
+      }
+      .nav-bottom a {
+        color: #666;
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
+      .nav-bottom a:hover { color: #1a1a1a; }
       
       footer {
         text-align: center;
@@ -63,19 +72,17 @@
     <header class="container">
       <a href="/" class="logo">📚 冰箱里的世界</a>
       <nav class="nav">
-        <a href="/">首页</a>
+        <a href="/novels">目录</a>
         <a href="#" onclick="logout()">退出</a>
       </nav>
     </header>
     
     <main class="container">
-      <div class="hero">
-        <h1>📖 小说目录</h1>
-        <p>会员专属阅读区</p>
-      </div>
+      <h1 class="chapter-title" id="title">加载中...</h1>
+      <div class="chapter-content" id="content">请稍候...</div>
       
-      <div class="chapter-list" id="chapterList">
-        <div class="empty">加载中...</div>
+      <div class="nav-bottom">
+        <a href="/novels">← 返回目录</a>
       </div>
     </main>
     
@@ -98,30 +105,26 @@
         window.location.href = '/login';
       }
       
-      async function loadChapters() {
-        const { data: chapters, error } = await supabase
+      const chapterId = new URLSearchParams(window.location.search).get('id');
+      if (!chapterId) {
+        window.location.href = '/novels';
+      }
+      
+      async function loadChapter() {
+        const { data: chapter, error } = await supabase
           .from('chapters')
           .select('*')
-          .order('order_num', { ascending: true });
+          .eq('id', chapterId)
+          .single();
         
-        const list = document.getElementById('chapterList');
-        
-        if (error) {
-          list.innerHTML = '<div class="empty">加载失败</div>';
+        if (error || !chapter) {
+          document.getElementById('title').textContent = '章节不存在';
+          document.getElementById('content').textContent = '';
           return;
         }
         
-        if (!chapters || chapters.length === 0) {
-          list.innerHTML = '<div class="empty">暂无章节，请等待作者更新</div>';
-          return;
-        }
-        
-        list.innerHTML = chapters.map(c => `
-          <div class="chapter-item" onclick="location.href='/read?id=${c.id}'">
-            <h3>第${c.order_num}章 ${c.title}</h3>
-            <div class="meta">${new Date(c.created_at).toLocaleDateString('zh-CN')}</div>
-          </div>
-        `).join('');
+        document.getElementById('title').textContent = `第${chapter.order_num}章 ${chapter.title}`;
+        document.getElementById('content').textContent = chapter.content;
       }
       
       window.logout = function() {
@@ -129,7 +132,7 @@
         window.location.href = '/';
       };
       
-      loadChapters();
+      loadChapter();
     </script>
   </body>
 </html>
