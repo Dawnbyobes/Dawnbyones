@@ -9,60 +9,120 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
     <title>注册 - 冰箱里的世界</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { 
-        font-family: system-ui, sans-serif;
-        background: #faf9f7;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+      
+      body {
+        font-family: "SF Mono", "Fira Code", "JetBrains Mono", "Courier New", monospace;
+        background: #0a0a0a;
+        color: #e0e0e0;
         min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
+      
       .box {
-        background: #fff;
-        padding: 2.5rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         width: 100%;
         max-width: 400px;
+        padding: 2rem;
       }
-      h1 { margin-bottom: 1.5rem; text-align: center; font-size: 1.5rem; }
+      
+      .back {
+        margin-bottom: 2rem;
+      }
+      
+      .back a {
+        color: #555;
+        text-decoration: none;
+        font-size: 0.8125rem;
+        transition: color 0.2s;
+      }
+      
+      .back a:hover {
+        color: #fff;
+      }
+      
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 400;
+        color: #fff;
+        margin-bottom: 2rem;
+      }
+      
+      h1::before {
+        content: ">";
+        color: #fff;
+        margin-right: 0.5rem;
+      }
+      
       input {
         width: 100%;
-        padding: 0.75rem;
+        padding: 0.875rem 1rem;
         margin-bottom: 1rem;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 1rem;
+        background: #111;
+        border: 1px solid #222;
+        color: #e0e0e0;
+        font-family: inherit;
+        font-size: 0.875rem;
+        outline: none;
+        transition: border-color 0.2s;
       }
+      
+      input:focus {
+        border-color: #444;
+      }
+      
+      input::placeholder {
+        color: #444;
+      }
+      
       button {
         width: 100%;
-        padding: 0.75rem;
-        background: #1a1a1a;
-        color: #fff;
+        padding: 0.875rem;
+        background: #fff;
+        color: #0a0a0a;
         border: none;
-        border-radius: 6px;
-        font-size: 1rem;
+        font-family: inherit;
+        font-size: 0.875rem;
         cursor: pointer;
+        transition: opacity 0.2s;
       }
-      button:disabled { background: #999; }
-      .error { color: #c00; margin-top: 1rem; text-align: center; font-size: 0.875rem; }
-      .success { color: #0a0; margin-top: 1rem; text-align: center; font-size: 0.875rem; }
-      .back { text-align: center; margin-top: 1.5rem; }
-      .back a { color: #666; text-decoration: none; }
-      .back a:hover { text-decoration: underline; }
+      
+      button:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+      
+      button:disabled {
+        background: #222;
+        color: #555;
+        cursor: not-allowed;
+      }
+      
+      .message {
+        margin-top: 1.5rem;
+        font-size: 0.8125rem;
+        line-height: 1.6;
+      }
+      
+      .error { color: #c00; }
+      .success { color: #0a0; }
     </style>
   </head>
   <body>
     <div class="box">
-      <h1>📚 会员注册</h1>
+      <div class="back">
+        <a href="/">← 返回</a>
+      </div>
+      
+      <h1>会员注册</h1>
+      
       <form id="registerForm">
         <input type="text" id="inviteCode" placeholder="邀请码" value={inviteCode} required />
-        <input type="email" id="email" placeholder="邮箱" required />
+        <input type="email" id="email" placeholder="邮箱地址" required />
         <input type="password" id="password" placeholder="密码（至少6位）" required minlength="6" />
         <button type="submit" id="submitBtn">注册</button>
       </form>
-      <div id="message"></div>
-      <div class="back"><a href="/">← 返回首页</a></div>
+      
+      <div class="message" id="message"></div>
     </div>
     
     <script type="module">
@@ -79,7 +139,7 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         btn.disabled = true;
-        btn.textContent = '注册中...';
+        btn.textContent = '处理中...';
         
         const code = document.getElementById('inviteCode').value.trim();
         const email = document.getElementById('email').value.trim();
@@ -94,19 +154,16 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
             .limit(1);
           
           if (codeError || !codes || codes.length === 0) {
-            msg.innerHTML = '<p class="error">❌ 邀请码无效或已被使用</p>';
+            msg.innerHTML = '<p class="error">邀请码无效或已被使用</p>';
             btn.disabled = false;
             btn.textContent = '注册';
             return;
           }
           
-          const { data: authData, error: authError } = await supabase.auth.signUp({
-            email,
-            password
-          });
+          const { error: authError } = await supabase.auth.signUp({ email, password });
           
           if (authError) {
-            msg.innerHTML = `<p class="error">❌ ${authError.message}</p>`;
+            msg.innerHTML = `<p class="error">${authError.message}</p>`;
             btn.disabled = false;
             btn.textContent = '注册';
             return;
@@ -117,11 +174,11 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
             .update({ used: true, used_by: email, used_at: new Date().toISOString() })
             .eq('id', codes[0].id);
           
-          msg.innerHTML = '<p class="success">✅ 注册成功！正在跳转登录页...</p>';
+          msg.innerHTML = '<p class="success">注册成功，正在跳转...</p>';
           setTimeout(() => window.location.href = '/login', 1500);
           
         } catch (err) {
-          msg.innerHTML = '<p class="error">❌ 网络错误，请重试</p>';
+          msg.innerHTML = '<p class="error">网络错误，请重试</p>';
           btn.disabled = false;
           btn.textContent = '注册';
         }

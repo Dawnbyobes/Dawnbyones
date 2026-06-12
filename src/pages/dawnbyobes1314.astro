@@ -5,78 +5,184 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <title>管理后台 - 冰箱里的世界</title>
+    <title>后台 - 冰箱里的世界</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
+      
       body {
-        font-family: system-ui, sans-serif;
-        background: #f5f5f5;
-        color: #333;
+        font-family: "SF Mono", "Fira Code", "JetBrains Mono", "Courier New", monospace;
+        background: #0a0a0a;
+        color: #e0e0e0;
+        min-height: 100vh;
       }
-      .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+      
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 2rem;
+      }
       
       header {
-        background: #1a1a1a;
-        color: #fff;
-        padding: 1rem 2rem;
+        padding: 1.5rem 0;
+        border-bottom: 1px solid #1a1a1a;
         display: flex;
         justify-content: space-between;
         align-items: center;
       }
       
-      h1 { font-size: 1.25rem; }
-      .nav a { color: #fff; text-decoration: none; margin-left: 1.5rem; font-size: 0.875rem; }
-      
-      .card {
-        background: #fff;
-        border-radius: 8px;
-        padding: 2rem;
-        margin: 1.5rem 0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      h1 {
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: #fff;
       }
       
-      .card h2 { margin-bottom: 1.5rem; font-size: 1.125rem; }
+      h1::before {
+        content: ">";
+        margin-right: 0.5rem;
+      }
+      
+      .nav a {
+        color: #555;
+        text-decoration: none;
+        margin-left: 2rem;
+        font-size: 0.8125rem;
+        transition: color 0.2s;
+        cursor: pointer;
+      }
+      
+      .nav a:hover {
+        color: #fff;
+      }
+      
+      main {
+        padding: 3rem 0;
+      }
+      
+      .card {
+        background: #111;
+        border: 1px solid #1a1a1a;
+        border-radius: 4px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+      }
+      
+      .card h2 {
+        font-size: 0.9375rem;
+        font-weight: 400;
+        color: #fff;
+        margin-bottom: 1.5rem;
+      }
+      
+      .card h2::before {
+        content: "$";
+        color: #555;
+        margin-right: 0.5rem;
+      }
       
       input, textarea {
         width: 100%;
-        padding: 0.75rem;
+        padding: 0.875rem 1rem;
         margin-bottom: 1rem;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 1rem;
+        background: #0a0a0a;
+        border: 1px solid #222;
+        color: #e0e0e0;
         font-family: inherit;
+        font-size: 0.875rem;
+        outline: none;
+        transition: border-color 0.2s;
       }
       
-      textarea { min-height: 400px; resize: vertical; }
+      input:focus, textarea:focus {
+        border-color: #444;
+      }
+      
+      input::placeholder, textarea::placeholder {
+        color: #333;
+      }
+      
+      textarea {
+        min-height: 400px;
+        resize: vertical;
+        line-height: 1.8;
+      }
       
       button {
-        background: #1a1a1a;
-        color: #fff;
-        padding: 0.75rem 2rem;
+        padding: 0.75rem 1.5rem;
+        background: #fff;
+        color: #0a0a0a;
         border: none;
-        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.8125rem;
         cursor: pointer;
-        font-size: 1rem;
+        transition: opacity 0.2s;
       }
       
-      button:hover { background: #333; }
-      button:disabled { background: #999; }
+      button:hover:not(:disabled) {
+        opacity: 0.9;
+      }
       
-      .success { color: #0a0; margin-top: 1rem; }
-      .error { color: #c00; margin-top: 1rem; }
+      button:disabled {
+        background: #222;
+        color: #555;
+        cursor: not-allowed;
+      }
+      
+      .message {
+        margin-top: 1rem;
+        font-size: 0.8125rem;
+      }
+      
+      .error { color: #c00; }
+      .success { color: #0a0; }
+      
+      .chapter-list {
+        margin-top: 1.5rem;
+      }
+      
+      .chapter-item {
+        padding: 1rem;
+        border-bottom: 1px solid #1a1a1a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .chapter-item:hover {
+        background: #0a0a0a;
+      }
+      
+      .chapter-item h3 {
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: #888;
+      }
+      
+      .chapter-item .meta {
+        font-size: 0.75rem;
+        color: #333;
+      }
       
       .no-access {
         text-align: center;
-        padding: 5rem 2rem;
+        padding: 6rem 2rem;
       }
-      .no-access h2 { margin-bottom: 1rem; }
-      .no-access p { color: #666; }
+      
+      .no-access h2 {
+        font-size: 1rem;
+        color: #fff;
+        margin-bottom: 1rem;
+      }
+      
+      .no-access p {
+        color: #555;
+        font-size: 0.875rem;
+      }
     </style>
   </head>
   <body>
     <div id="app">
       <div class="no-access">
-        <h2>🔒 验证中...</h2>
+        <h2>验证中...</h2>
         <p>请稍候</p>
       </div>
     </div>
@@ -89,7 +195,6 @@
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
       
       async function checkAdmin() {
-        // 检查登录
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           window.location.href = '/login';
@@ -98,7 +203,6 @@
         
         const email = session.user.email;
         
-        // 检查是否是管理员
         const { data: admin, error } = await supabase
           .from('admins')
           .select('*')
@@ -110,37 +214,40 @@
             <div class="no-access">
               <h2>⛔ 无权访问</h2>
               <p>你没有管理员权限</p>
-              <p style="margin-top:1rem;"><a href="/" style="color:#666;">返回首页</a></p>
+              <p style="margin-top:1rem;"><a href="/" style="color:#555;">返回首页</a></p>
             </div>
           `;
           return;
         }
         
-        // 是管理员，显示后台
         document.getElementById('app').innerHTML = `
-          <header>
-            <h1>📚 冰箱里的世界 - 管理后台</h1>
+          <header class="container">
+            <h1>管理后台</h1>
             <nav class="nav">
-              <a href="/">返回首页</a>
-              <a href="#" onclick="logout()">退出</a>
+              <a href="/">首页</a>
+              <a onclick="logout()">退出</a>
             </nav>
           </header>
           
-          <div class="container">
+          <main class="container">
             <div class="card">
-              <h2>✏️ 发布新章节</h2>
+              <h2>发布新章节</h2>
               <form id="chapterForm">
                 <input type="text" id="title" placeholder="章节标题" required />
                 <input type="number" id="order_num" placeholder="章节序号" required min="1" />
                 <textarea id="content" placeholder="在这里写小说内容..."></textarea>
-                <button type="submit" id="submitBtn">发布章节</button>
+                <button type="submit" id="submitBtn">发布</button>
               </form>
-              <div id="message"></div>
+              <div class="message" id="message"></div>
             </div>
-          </div>
+            
+            <div class="card">
+              <h2>已发布章节</h2>
+              <div class="chapter-list" id="chapterList">加载中...</div>
+            </div>
+          </main>
         `;
         
-        // 绑定表单事件
         document.getElementById('chapterForm').addEventListener('submit', async (e) => {
           e.preventDefault();
           const btn = document.getElementById('submitBtn');
@@ -157,15 +264,38 @@
           
           const msg = document.getElementById('message');
           if (error) {
-            msg.innerHTML = '<p class="error">❌ 发布失败：' + error.message + '</p>';
+            msg.innerHTML = '<p class="error">发布失败：' + error.message + '</p>';
           } else {
-            msg.innerHTML = '<p class="success">✅ 发布成功！</p>';
+            msg.innerHTML = '<p class="success">发布成功</p>';
             document.getElementById('chapterForm').reset();
+            loadChapters();
           }
           
           btn.disabled = false;
-          btn.textContent = '发布章节';
+          btn.textContent = '发布';
         });
+        
+        loadChapters();
+      }
+      
+      async function loadChapters() {
+        const { data: chapters, error } = await supabase
+          .from('chapters')
+          .select('*')
+          .order('order_num', { ascending: true });
+        
+        const list = document.getElementById('chapterList');
+        if (error || !chapters || chapters.length === 0) {
+          list.innerHTML = '<p style="color:#333;">暂无章节</p>';
+          return;
+        }
+        
+        list.innerHTML = chapters.map(c => `
+          <div class="chapter-item">
+            <h3>第${c.order_num}章 ${c.title}</h3>
+            <span class="meta">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
+          </div>
+        `).join('');
       }
       
       window.logout = function() {

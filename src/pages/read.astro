@@ -10,13 +10,20 @@ const chapterId = Astro.url.searchParams.get('id');
     <title>阅读 - 冰箱里的世界</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
+      
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Serif SC", serif;
-        background: #faf9f7;
-        color: #333;
-        line-height: 1.8;
+        font-family: "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+        background: #fafafa;
+        color: #1a1a1a;
+        line-height: 2;
+        font-size: 1.125rem;
       }
-      .container { max-width: 700px; margin: 0 auto; padding: 0 1.5rem; }
+      
+      .container {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 0 2rem;
+      }
       
       header {
         padding: 1.5rem 0;
@@ -26,71 +33,106 @@ const chapterId = Astro.url.searchParams.get('id');
         align-items: center;
         position: sticky;
         top: 0;
-        background: #faf9f7;
+        background: #fafafa;
+        z-index: 10;
       }
-      .logo { font-size: 1.25rem; font-weight: 600; color: #222; text-decoration: none; }
-      .nav a { color: #666; text-decoration: none; margin-left: 1.5rem; font-size: 0.875rem; }
+      
+      .logo {
+        font-family: "SF Mono", monospace;
+        font-size: 0.8125rem;
+        color: #1a1a1a;
+        text-decoration: none;
+      }
+      
+      .logo::before {
+        content: ">";
+        margin-right: 0.5rem;
+      }
+      
+      .nav a {
+        font-family: "SF Mono", monospace;
+        color: #999;
+        text-decoration: none;
+        margin-left: 1.5rem;
+        font-size: 0.8125rem;
+        transition: color 0.2s;
+        cursor: pointer;
+      }
+      
+      .nav a:hover {
+        color: #1a1a1a;
+      }
+      
+      main {
+        padding: 4rem 0 6rem;
+      }
       
       .chapter-title {
-        text-align: center;
-        padding: 3rem 0 2rem;
         font-size: 1.75rem;
         font-weight: 600;
+        margin-bottom: 3rem;
+        text-align: center;
+        color: #1a1a1a;
       }
       
       .chapter-content {
-        font-size: 1.125rem;
-        line-height: 2;
-        color: #444;
-        padding-bottom: 4rem;
+        line-height: 2.2;
+        color: #333;
         white-space: pre-wrap;
+        font-size: 1.125rem;
+      }
+      
+      .chapter-content p {
+        margin-bottom: 1.5rem;
+        text-indent: 2em;
+      }
+      
+      .divider {
+        width: 2rem;
+        height: 1px;
+        background: #ddd;
+        margin: 3rem auto;
       }
       
       .nav-bottom {
+        margin-top: 4rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e5e5;
         display: flex;
         justify-content: space-between;
-        padding: 2rem 0 4rem;
-        border-top: 1px solid #e5e5e5;
       }
-      .nav-bottom a {
-        color: #666;
-        text-decoration: none;
-        font-size: 0.875rem;
-      }
-      .nav-bottom a:hover { color: #1a1a1a; }
       
-      footer {
-        text-align: center;
-        padding: 2rem 0;
-        border-top: 1px solid #e5e5e5;
+      .nav-bottom a {
+        font-family: "SF Mono", monospace;
         color: #999;
-        font-size: 0.875rem;
+        text-decoration: none;
+        font-size: 0.8125rem;
+        transition: color 0.2s;
+      }
+      
+      .nav-bottom a:hover {
+        color: #1a1a1a;
       }
     </style>
   </head>
   <body>
     <header class="container">
-      <a href="/" class="logo">📚 冰箱里的世界</a>
+      <a href="/" class="logo">冰箱里的世界</a>
       <nav class="nav">
         <a href="/novels">目录</a>
-        <a href="#" onclick="logout()">退出</a>
+        <a onclick="logout()">退出</a>
       </nav>
     </header>
     
     <main class="container">
       <h1 class="chapter-title" id="title">加载中...</h1>
-      <div class="chapter-content" id="content">请稍候...</div>
+      <div class="divider"></div>
+      <div class="chapter-content" id="content"></div>
       
       <div class="nav-bottom">
         <a href="/novels">← 返回目录</a>
       </div>
     </main>
-    
-    <footer>
-      <div class="container">
-        <p>© 2026 冰箱里的世界 · 仅供会员阅读</p>
-      </div>
-    </footer>
     
     <script type="module">
       import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
@@ -99,7 +141,6 @@ const chapterId = Astro.url.searchParams.get('id');
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3a3Fsd2RldGVpdGlzZHJsd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODkwMzMsImV4cCI6MjA5Njg2NTAzM30.hSbK_Z1rH9pXUwpfh2o5ZxbpkRUyy_7xDYcrmvLXgq8';
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
       
-      // 检查登录
       const token = localStorage.getItem('sb_token');
       if (!token) {
         window.location.href = '/login';
@@ -119,12 +160,16 @@ const chapterId = Astro.url.searchParams.get('id');
         
         if (error || !chapter) {
           document.getElementById('title').textContent = '章节不存在';
-          document.getElementById('content').textContent = '';
           return;
         }
         
         document.getElementById('title').textContent = `第${chapter.order_num}章 ${chapter.title}`;
-        document.getElementById('content').textContent = chapter.content;
+        
+        // 把内容按段落分割，加上 p 标签
+        const paragraphs = chapter.content.split('\n').filter(p => p.trim());
+        document.getElementById('content').innerHTML = paragraphs
+          .map(p => `<p>${p.trim()}</p>`)
+          .join('');
       }
       
       window.logout = function() {
