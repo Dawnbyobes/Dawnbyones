@@ -44,6 +44,17 @@ const description = "会员邀请制 · 私密阅读空间";
         color: #222;
       }
       
+      .nav a {
+        color: #666;
+        text-decoration: none;
+        margin-left: 1.5rem;
+        font-size: 0.875rem;
+      }
+      
+      .nav a:hover {
+        color: #1a1a1a;
+      }
+      
       .hero {
         text-align: center;
         padding: 5rem 0 3rem;
@@ -101,6 +112,17 @@ const description = "会员邀请制 · 私密阅读空间";
         margin-top: 1.5rem;
       }
       
+      .btn {
+        display: inline-block;
+        background: #1a1a1a;
+        color: #fff;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        margin-top: 1.5rem;
+      }
+      
       footer {
         text-align: center;
         padding: 2rem 0;
@@ -113,6 +135,10 @@ const description = "会员邀请制 · 私密阅读空间";
   <body>
     <header class="container">
       <span class="logo">📚 {title}</span>
+      <nav class="nav">
+        <a href="/login">登录</a>
+        <a href="/register">注册</a>
+      </nav>
     </header>
     
     <main class="container">
@@ -126,6 +152,7 @@ const description = "会员邀请制 · 私密阅读空间";
         <div class="lock-icon">📖</div>
         <h2>内容区域</h2>
         <p>登录后可阅读完整小说内容</p>
+        <a href="/register" class="btn">使用邀请码注册</a>
         <p class="hint">此区域受邀请码保护<br>未受邀用户无法访问</p>
       </div>
     </main>
