@@ -66,7 +66,13 @@
       </div>
     </div>
     
-    <script>
+    <script type="module">
+      import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+      
+      const SUPABASE_URL = 'https://cwkqlwdeteitisdrlwmg.supabase.co';
+      const SUPABASE_KEY = 'sb_publishable_qypuFxvUtu1ZfIC1w8FtDw_Ue0viR85';
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+      
       const form = document.getElementById('loginForm');
       const msg = document.getElementById('message');
       const btn = document.getElementById('submitBtn');
@@ -80,24 +86,25 @@
         const password = document.getElementById('password').value;
         
         try {
-          const res = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
           });
           
-          const data = await res.json();
-          
-          if (res.ok) {
-            msg.innerHTML = `<p class="success">✅ 登录成功！正在跳转...</p>`;
-            setTimeout(() => window.location.href = '/novels', 1000);
-          } else {
-            msg.innerHTML = `<p class="error">❌ ${data.error}</p>`;
+          if (error) {
+            msg.innerHTML = `<p class="error">❌ ${error.message}</p>`;
             btn.disabled = false;
             btn.textContent = '登录';
+            return;
           }
+          
+          localStorage.setItem('sb_token', data.session.access_token);
+          
+          msg.innerHTML = '<p class="success">✅ 登录成功！正在跳转...</p>';
+          setTimeout(() => window.location.href = '/novels', 1000);
+          
         } catch (err) {
-          msg.innerHTML = `<p class="error">❌ 网络错误，请重试</p>`;
+          msg.innerHTML = '<p class="error">❌ 网络错误，请重试</p>';
           btn.disabled = false;
           btn.textContent = '登录';
         }

@@ -65,7 +65,13 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
       <div class="back"><a href="/">← 返回首页</a></div>
     </div>
     
-    <script>
+    <script type="module">
+      import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+      
+      const SUPABASE_URL = 'https://cwkqlwdeteitisdrlwmg.supabase.co';
+      const SUPABASE_KEY = 'sb_publishable_qypuFxvUtu1ZfIC1w8FtDw_Ue0viR85';
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+      
       const form = document.getElementById('registerForm');
       const msg = document.getElementById('message');
       const btn = document.getElementById('submitBtn');
@@ -80,24 +86,42 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
         const password = document.getElementById('password').value;
         
         try {
-          const res = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, email, password })
-          });
+          const { data: codes, error: codeError } = await supabase
+            .from('invite_codes')
+            .select('*')
+            .eq('code', code)
+            .eq('used', false)
+            .single();
           
-          const data = await res.json();
-          
-          if (res.ok) {
-            msg.innerHTML = `<p class="success">✅ 注册成功！正在跳转登录页...</p>`;
-            setTimeout(() => window.location.href = '/login', 1500);
-          } else {
-            msg.innerHTML = `<p class="error">❌ ${data.error}</p>`;
+          if (codeError || !codes) {
+            msg.innerHTML = '<p class="error">❌ 邀请码无效或已被使用</p>';
             btn.disabled = false;
             btn.textContent = '注册';
+            return;
           }
+          
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email,
+            password
+          });
+          
+          if (authError) {
+            msg.innerHTML = `<p class="error">❌ ${authError.message}</p>`;
+            btn.disabled = false;
+            btn.textContent = '注册';
+            return;
+          }
+          
+          await supabase
+            .from('invite_codes')
+            .update({ used: true, used_by: email, used_at: new Date().toISOString() })
+            .eq('id', codes.id);
+          
+          msg.innerHTML = '<p class="success">✅ 注册成功！正在跳转登录页...</p>';
+          setTimeout(() => window.location.href = '/login', 1500);
+          
         } catch (err) {
-          msg.innerHTML = `<p class="error">❌ 网络错误，请重试</p>`;
+          msg.innerHTML = '<p class="error">❌ 网络错误，请重试</p>';
           btn.disabled = false;
           btn.textContent = '注册';
         }
