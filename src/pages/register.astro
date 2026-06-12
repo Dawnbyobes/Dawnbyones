@@ -91,9 +91,9 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
             .select('*')
             .eq('code', code)
             .eq('used', false)
-            .single();
+            .limit(1);
           
-          if (codeError || !codes) {
+          if (codeError || !codes || codes.length === 0) {
             msg.innerHTML = '<p class="error">❌ 邀请码无效或已被使用</p>';
             btn.disabled = false;
             btn.textContent = '注册';
@@ -115,7 +115,7 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
           await supabase
             .from('invite_codes')
             .update({ used: true, used_by: email, used_at: new Date().toISOString() })
-            .eq('id', codes.id);
+            .eq('id', codes[0].id);
           
           msg.innerHTML = '<p class="success">✅ 注册成功！正在跳转登录页...</p>';
           setTimeout(() => window.location.href = '/login', 1500);
