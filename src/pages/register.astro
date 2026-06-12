@@ -1,0 +1,107 @@
+---
+const inviteCode = Astro.url.searchParams.get('code') || '';
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>注册 - 冰箱里的世界</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { 
+        font-family: system-ui, sans-serif;
+        background: #faf9f7;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      .box {
+        background: #fff;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 400px;
+      }
+      h1 { margin-bottom: 1.5rem; text-align: center; font-size: 1.5rem; }
+      input {
+        width: 100%;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+      }
+      button {
+        width: 100%;
+        padding: 0.75rem;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      button:disabled { background: #999; }
+      .error { color: #c00; margin-top: 1rem; text-align: center; font-size: 0.875rem; }
+      .success { color: #0a0; margin-top: 1rem; text-align: center; font-size: 0.875rem; }
+      .back { text-align: center; margin-top: 1.5rem; }
+      .back a { color: #666; text-decoration: none; }
+      .back a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h1>📚 会员注册</h1>
+      <form id="registerForm">
+        <input type="text" id="inviteCode" placeholder="邀请码" value={inviteCode} required />
+        <input type="email" id="email" placeholder="邮箱" required />
+        <input type="password" id="password" placeholder="密码（至少6位）" required minlength="6" />
+        <button type="submit" id="submitBtn">注册</button>
+      </form>
+      <div id="message"></div>
+      <div class="back"><a href="/">← 返回首页</a></div>
+    </div>
+    
+    <script>
+      const form = document.getElementById('registerForm');
+      const msg = document.getElementById('message');
+      const btn = document.getElementById('submitBtn');
+      
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        btn.disabled = true;
+        btn.textContent = '注册中...';
+        
+        const code = document.getElementById('inviteCode').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        
+        try {
+          const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, email, password })
+          });
+          
+          const data = await res.json();
+          
+          if (res.ok) {
+            msg.innerHTML = `<p class="success">✅ 注册成功！正在跳转登录页...</p>`;
+            setTimeout(() => window.location.href = '/login', 1500);
+          } else {
+            msg.innerHTML = `<p class="error">❌ ${data.error}</p>`;
+            btn.disabled = false;
+            btn.textContent = '注册';
+          }
+        } catch (err) {
+          msg.innerHTML = `<p class="error">❌ 网络错误，请重试</p>`;
+          btn.disabled = false;
+          btn.textContent = '注册';
+        }
+      });
+    </script>
+  </body>
+</html>
