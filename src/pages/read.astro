@@ -76,7 +76,6 @@ const chapterId = Astro.url.searchParams.get('id');
         font-family: "PingFang SC", sans-serif;
       }
 
-      /* 段落容器 */
       .paragraph-wrapper {
         position: relative;
         padding: 0.5rem 0;
@@ -93,7 +92,6 @@ const chapterId = Astro.url.searchParams.get('id');
         cursor: pointer;
       }
 
-      /* 评论气泡 */
       .comment-bubble {
         position: absolute;
         right: -3rem;
@@ -120,7 +118,6 @@ const chapterId = Astro.url.searchParams.get('id');
         background: #222;
       }
 
-      /* 评论面板 */
       .comment-panel {
         display: none;
         background: #111;
@@ -299,7 +296,6 @@ const chapterId = Astro.url.searchParams.get('id');
         window.location.href = '/login';
       }
 
-      // 获取或生成读者编号
       let readerId = localStorage.getItem('reader_id');
       if (!readerId) {
         readerId = '读者#' + Math.floor(1000 + Math.random() * 9000);
@@ -316,7 +312,6 @@ const chapterId = Astro.url.searchParams.get('id');
       let activePanelIndex = -1;
 
       async function loadChapter() {
-        // 加载章节列表
         const { data: chapters } = await supabase
           .from('chapters')
           .select('id, order_num, title')
@@ -325,7 +320,6 @@ const chapterId = Astro.url.searchParams.get('id');
         allChapters = chapters || [];
         const currentIndex = allChapters.findIndex(c => c.id === currentId);
 
-        // 加载当前章节
         const { data: chapter } = await supabase
           .from('chapters')
           .select('*')
@@ -340,14 +334,13 @@ const chapterId = Astro.url.searchParams.get('id');
         document.getElementById('title').textContent = `第${chapter.order_num}章 ${chapter.title}`;
         document.getElementById('meta').textContent = new Date(chapter.created_at).toLocaleDateString('zh-CN');
 
-        // 分段渲染
         const paragraphs = chapter.content.split('\n').filter(p => p.trim());
         const contentDiv = document.getElementById('content');
-        
+
         contentDiv.innerHTML = paragraphs.map((p, index) => `
           <div class="paragraph-wrapper" data-index="${index}">
             <div class="paragraph" onclick="togglePanel(${index})">${p}</div>
-            <div class="comment-bubble" id="bubble-${index}" onclick="togglePanel(${index})">评</div>
+            <div class="comment-bubble" id="bubble-${index}" onclick="togglePanel(${index})"></div>
             <div class="comment-panel" id="panel-${index}">
               <h4>段落评论</h4>
               <div class="comment-list" id="list-${index}"></div>
@@ -359,10 +352,8 @@ const chapterId = Astro.url.searchParams.get('id');
           </div>
         `).join('');
 
-        // 加载所有评论
         await loadAllComments();
 
-        // 导航
         const prevLink = document.getElementById('prevLink');
         const nextLink = document.getElementById('nextLink');
 
@@ -394,13 +385,11 @@ const chapterId = Astro.url.searchParams.get('id');
 
         currentComments = comments || [];
 
-        // 按段落分组统计
         const countMap = {};
         comments?.forEach(c => {
           countMap[c.paragraph_index] = (countMap[c.paragraph_index] || 0) + 1;
         });
 
-        // 更新气泡
         Object.keys(countMap).forEach(idx => {
           const bubble = document.getElementById(`bubble-${idx}`);
           if (bubble) {
@@ -414,7 +403,6 @@ const chapterId = Astro.url.searchParams.get('id');
         const panel = document.getElementById(`panel-${index}`);
         const isActive = panel.classList.contains('active');
 
-        // 关闭其他面板
         document.querySelectorAll('.comment-panel.active').forEach(p => {
           p.classList.remove('active');
         });
@@ -423,7 +411,7 @@ const chapterId = Astro.url.searchParams.get('id');
           panel.classList.add('active');
           activePanelIndex = index;
           renderComments(index);
-          document.getElementById(`input-${index}`).focus();
+          setTimeout(() => document.getElementById(`input-${index}`).focus(), 100);
         } else {
           activePanelIndex = -1;
         }
@@ -478,11 +466,9 @@ const chapterId = Astro.url.searchParams.get('id');
         btn.disabled = false;
         btn.textContent = '发送';
 
-        // 重新加载评论
         await loadAllComments();
         renderComments(index);
 
-        // 更新气泡
         const bubble = document.getElementById(`bubble-${index}`);
         bubble.classList.add('has-comments');
       };
