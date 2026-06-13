@@ -56,8 +56,44 @@ const chapterId = Astro.url.searchParams.get('id');
 
       .nav a:hover { color: #fff; }
 
+      /* 阅读设置栏 */
+      .reader-settings {
+        display: flex;
+        gap: 2rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid #111;
+        margin-bottom: 2rem;
+        font-family: "PingFang SC", sans-serif;
+        font-size: 0.8125rem;
+        color: #555;
+      }
+
+      .setting-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .setting-group label { color: #666; }
+
+      .setting-group button {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        color: #888;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8125rem;
+        transition: all 0.2s;
+      }
+
+      .setting-group button:hover {
+        border-color: #555;
+        color: #fff;
+      }
+
       .chapter-header {
-        padding: 4rem 0 3rem;
+        padding: 2rem 0 3rem;
         text-align: center;
         border-bottom: 1px solid #111;
         margin-bottom: 3rem;
@@ -133,14 +169,9 @@ const chapterId = Astro.url.searchParams.get('id');
         font-family: "PingFang SC", sans-serif;
       }
 
-      .comment-count {
-        color: #555;
-        font-weight: 400;
-      }
+      .comment-count { color: #555; font-weight: 400; }
 
-      .comment-form {
-        margin-bottom: 3rem;
-      }
+      .comment-form { margin-bottom: 3rem; }
 
       .comment-textarea {
         width: 100%;
@@ -306,6 +337,20 @@ const chapterId = Astro.url.searchParams.get('id');
     </header>
 
     <main class="container">
+      <!-- 阅读设置 -->
+      <div class="reader-settings">
+        <div class="setting-group">
+          <label>字号</label>
+          <button onclick="changeFontSize(-1)">小</button>
+          <button onclick="changeFontSize(1)">大</button>
+        </div>
+        <div class="setting-group">
+          <label>行距</label>
+          <button onclick="changeLineHeight(-0.2)">窄</button>
+          <button onclick="changeLineHeight(0.2)">宽</button>
+        </div>
+      </div>
+
       <div class="chapter-header">
         <h1 id="title">加载中</h1>
         <div class="meta" id="meta"></div>
@@ -361,7 +406,34 @@ const chapterId = Astro.url.searchParams.get('id');
       let allChapters = [];
       let commentsData = [];
 
+      // 阅读设置
+      let fontSize = parseFloat(localStorage.getItem('reader_font_size')) || 1.125;
+      let lineHeight = parseFloat(localStorage.getItem('reader_line_height')) || 2;
+
+      function applySettings() {
+        const content = document.getElementById('content');
+        if (content) {
+          content.style.fontSize = fontSize + 'rem';
+          content.style.lineHeight = lineHeight;
+        }
+      }
+
+      window.changeFontSize = function(delta) {
+        fontSize = Math.max(0.875, Math.min(1.5, fontSize + delta * 0.125));
+        localStorage.setItem('reader_font_size', fontSize);
+        applySettings();
+      };
+
+      window.changeLineHeight = function(delta) {
+        lineHeight = Math.max(1.5, Math.min(3, lineHeight + delta));
+        localStorage.setItem('reader_line_height', lineHeight);
+        applySettings();
+      };
+
       async function loadChapter() {
+        // 保存阅读进度
+        localStorage.setItem('last_read_chapter', currentId);
+
         const { data: chapters } = await supabase
           .from('chapters')
           .select('id, order_num, title')
@@ -386,6 +458,8 @@ const chapterId = Astro.url.searchParams.get('id');
 
         const paragraphs = chapter.content.split('\n').filter(p => p.trim());
         document.getElementById('content').innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+
+        applySettings();
 
         const prevLink = document.getElementById('prevLink');
         const nextLink = document.getElementById('nextLink');
