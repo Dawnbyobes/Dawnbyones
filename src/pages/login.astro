@@ -10,9 +10,10 @@
       * { margin: 0; padding: 0; box-sizing: border-box; }
       
       body {
-        font-family: "SF Mono", "Fira Code", "JetBrains Mono", "Courier New", monospace;
+        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
         background: #0a0a0a;
-        color: #e0e0e0;
+        color: #e5e5e5;
+        line-height: 1.8;
         min-height: 100vh;
         display: flex;
         align-items: center;
@@ -25,69 +26,70 @@
         padding: 2rem;
       }
       
-      .back {
-        margin-bottom: 2rem;
-      }
-      
-      .back a {
+      .back-link {
+        display: inline-block;
         color: #555;
         text-decoration: none;
-        font-size: 0.8125rem;
+        font-size: 0.875rem;
+        margin-bottom: 3rem;
         transition: color 0.2s;
       }
       
-      .back a:hover {
+      .back-link:hover {
         color: #fff;
       }
       
       h1 {
-        font-size: 1.25rem;
-        font-weight: 400;
+        font-size: 1.5rem;
+        font-weight: 600;
         color: #fff;
-        margin-bottom: 2rem;
+        margin-bottom: 0.5rem;
       }
       
-      h1::before {
-        content: ">";
-        color: #fff;
-        margin-right: 0.5rem;
+      .subtitle {
+        font-size: 0.875rem;
+        color: #555;
+        margin-bottom: 2.5rem;
       }
       
       input {
         width: 100%;
-        padding: 0.875rem 1rem;
+        padding: 1rem;
         margin-bottom: 1rem;
         background: #111;
         border: 1px solid #222;
-        color: #e0e0e0;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 0.9375rem;
         font-family: inherit;
-        font-size: 0.875rem;
         outline: none;
         transition: border-color 0.2s;
-      }
-      
-      input:focus {
-        border-color: #444;
       }
       
       input::placeholder {
         color: #444;
       }
       
+      input:focus {
+        border-color: #444;
+      }
+      
       button {
         width: 100%;
-        padding: 0.875rem;
+        padding: 1rem;
+        margin-top: 0.5rem;
         background: #fff;
         color: #0a0a0a;
         border: none;
-        font-family: inherit;
+        border-radius: 6px;
         font-size: 0.875rem;
+        font-weight: 500;
         cursor: pointer;
         transition: opacity 0.2s;
       }
       
-      button:hover:not(:disabled) {
-        opacity: 0.9;
+      button:hover {
+        opacity: 0.85;
       }
       
       button:disabled {
@@ -97,15 +99,15 @@
       }
       
       .links {
-        margin-top: 1.5rem;
-        display: flex;
-        justify-content: space-between;
+        margin-top: 2rem;
+        text-align: center;
+        font-size: 0.875rem;
       }
       
       .links a {
         color: #555;
         text-decoration: none;
-        font-size: 0.8125rem;
+        margin: 0 0.75rem;
         transition: color 0.2s;
       }
       
@@ -115,33 +117,31 @@
       
       .message {
         margin-top: 1.5rem;
-        font-size: 0.8125rem;
+        font-size: 0.875rem;
+        text-align: center;
       }
       
-      .error { color: #c00; }
-      .success { color: #0a0; }
+      .error { color: #c44; }
+      .success { color: #4c4; }
     </style>
   </head>
   <body>
     <div class="box">
-      <div class="back">
-        <a href="/">← 返回</a>
-      </div>
-      
+      <a href="/" class="back-link">← 返回首页</a>
       <h1>会员登录</h1>
+      <p class="subtitle">欢迎回来</p>
       
       <form id="loginForm">
-        <input type="email" id="email" placeholder="邮箱地址" required />
+        <input type="email" id="email" placeholder="邮箱" required />
         <input type="password" id="password" placeholder="密码" required />
         <button type="submit" id="submitBtn">登录</button>
       </form>
+      <div class="message" id="message"></div>
       
       <div class="links">
         <a href="/">首页</a>
         <a href="/register">注册账号</a>
       </div>
-      
-      <div class="message" id="message"></div>
     </div>
     
     <script type="module">
@@ -158,7 +158,31 @@
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         btn.disabled = true;
-        btn.textContent = '处理中...';
+        btn.textContent = '登录中...';
         
         const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value
+        const password = document.getElementById('password').value;
+        
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+          
+          if (error) {
+            msg.innerHTML = `<p class="error">${error.message}</p>`;
+            btn.disabled = false;
+            btn.textContent = '登录';
+            return;
+          }
+          
+          localStorage.setItem('sb_token', data.session.access_token);
+          msg.innerHTML = '<p class="success">登录成功，正在跳转...</p>';
+          setTimeout(() => window.location.href = '/novels', 1000);
+          
+        } catch (err) {
+          msg.innerHTML = '<p class="error">网络错误，请重试</p>';
+          btn.disabled = false;
+          btn.textContent = '登录';
+        }
+      });
+    </script>
+  </body>
+</html>

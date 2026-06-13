@@ -12,9 +12,9 @@ const chapterId = Astro.url.searchParams.get('id');
       * { margin: 0; padding: 0; box-sizing: border-box; }
       
       body {
-        font-family: "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
-        background: #fafafa;
-        color: #1a1a1a;
+        font-family: "Noto Serif SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+        background: #0a0a0a;
+        color: #ccc;
         line-height: 2;
         font-size: 1.125rem;
       }
@@ -27,59 +27,61 @@ const chapterId = Astro.url.searchParams.get('id');
       
       header {
         padding: 1.5rem 0;
-        border-bottom: 1px solid #e5e5e5;
         display: flex;
         justify-content: space-between;
         align-items: center;
         position: sticky;
         top: 0;
-        background: #fafafa;
+        background: #0a0a0a;
+        border-bottom: 1px solid #111;
         z-index: 10;
       }
       
       .logo {
-        font-family: "SF Mono", monospace;
-        font-size: 0.8125rem;
-        color: #1a1a1a;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #fff;
         text-decoration: none;
-      }
-      
-      .logo::before {
-        content: ">";
-        margin-right: 0.5rem;
+        letter-spacing: 0.05em;
       }
       
       .nav a {
-        font-family: "SF Mono", monospace;
-        color: #999;
+        color: #555;
         text-decoration: none;
         margin-left: 1.5rem;
-        font-size: 0.8125rem;
+        font-size: 0.875rem;
         transition: color 0.2s;
         cursor: pointer;
       }
       
       .nav a:hover {
-        color: #1a1a1a;
+        color: #fff;
       }
       
-      main {
-        padding: 4rem 0 6rem;
-      }
-      
-      .chapter-title {
-        font-size: 1.75rem;
-        font-weight: 600;
-        margin-bottom: 3rem;
+      .chapter-header {
+        padding: 4rem 0 3rem;
         text-align: center;
-        color: #1a1a1a;
+        border-bottom: 1px solid #111;
+        margin-bottom: 3rem;
+      }
+      
+      .chapter-header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 0.5rem;
+      }
+      
+      .chapter-header .meta {
+        font-size: 0.75rem;
+        color: #444;
+        font-family: "PingFang SC", sans-serif;
       }
       
       .chapter-content {
-        line-height: 2.2;
-        color: #333;
+        padding-bottom: 6rem;
         white-space: pre-wrap;
-        font-size: 1.125rem;
+        word-wrap: break-word;
       }
       
       .chapter-content p {
@@ -87,31 +89,31 @@ const chapterId = Astro.url.searchParams.get('id');
         text-indent: 2em;
       }
       
-      .divider {
-        width: 2rem;
-        height: 1px;
-        background: #ddd;
-        margin: 3rem auto;
-      }
-      
       .nav-bottom {
-        margin-top: 4rem;
-        padding-top: 2rem;
-        border-top: 1px solid #e5e5e5;
         display: flex;
         justify-content: space-between;
+        padding: 2rem 0 4rem;
+        border-top: 1px solid #111;
       }
       
       .nav-bottom a {
-        font-family: "SF Mono", monospace;
-        color: #999;
+        color: #555;
         text-decoration: none;
-        font-size: 0.8125rem;
+        font-size: 0.875rem;
+        font-family: "PingFang SC", sans-serif;
         transition: color 0.2s;
       }
       
       .nav-bottom a:hover {
-        color: #1a1a1a;
+        color: #fff;
+      }
+      
+      footer {
+        padding: 3rem 0;
+        text-align: center;
+        font-size: 0.75rem;
+        color: #222;
+        border-top: 1px solid #111;
       }
     </style>
   </head>
@@ -125,14 +127,21 @@ const chapterId = Astro.url.searchParams.get('id');
     </header>
     
     <main class="container">
-      <h1 class="chapter-title" id="title">加载中...</h1>
-      <div class="divider"></div>
+      <div class="chapter-header">
+        <h1 id="title">加载中...</h1>
+        <div class="meta" id="meta"></div>
+      </div>
+      
       <div class="chapter-content" id="content"></div>
       
       <div class="nav-bottom">
         <a href="/novels">← 返回目录</a>
       </div>
     </main>
+    
+    <footer class="container">
+      <p>© 2026 冰箱里的世界 · 仅供会员阅读</p>
+    </footer>
     
     <script type="module">
       import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
@@ -163,13 +172,12 @@ const chapterId = Astro.url.searchParams.get('id');
           return;
         }
         
-        document.getElementById('title').textContent = `第${chapter.order_num}章 ${chapter.title}`;
+        document.getElementById('title').textContent = `第${chapter.order_num}章 · ${chapter.title}`;
+        document.getElementById('meta').textContent = new Date(chapter.created_at).toLocaleDateString('zh-CN');
         
-        // 把内容按段落分割，加上 p 标签
+        // 把内容按段落分割，每段包一个 <p>
         const paragraphs = chapter.content.split('\n').filter(p => p.trim());
-        document.getElementById('content').innerHTML = paragraphs
-          .map(p => `<p>${p.trim()}</p>`)
-          .join('');
+        document.getElementById('content').innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
       }
       
       window.logout = function() {

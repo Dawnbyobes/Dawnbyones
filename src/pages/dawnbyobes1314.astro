@@ -5,47 +5,44 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <title>后台 - 冰箱里的世界</title>
+    <title>管理后台 - 冰箱里的世界</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       
       body {
-        font-family: "SF Mono", "Fira Code", "JetBrains Mono", "Courier New", monospace;
+        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
         background: #0a0a0a;
-        color: #e0e0e0;
+        color: #e5e5e5;
+        line-height: 1.8;
         min-height: 100vh;
       }
       
       .container {
-        max-width: 900px;
+        max-width: 800px;
         margin: 0 auto;
         padding: 0 2rem;
       }
       
       header {
         padding: 1.5rem 0;
-        border-bottom: 1px solid #1a1a1a;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        border-bottom: 1px solid #111;
       }
       
-      h1 {
+      .logo {
         font-size: 0.875rem;
-        font-weight: 400;
+        font-weight: 500;
         color: #fff;
-      }
-      
-      h1::before {
-        content: ">";
-        margin-right: 0.5rem;
+        letter-spacing: 0.05em;
       }
       
       .nav a {
         color: #555;
         text-decoration: none;
         margin-left: 2rem;
-        font-size: 0.8125rem;
+        font-size: 0.875rem;
         transition: color 0.2s;
         cursor: pointer;
       }
@@ -54,50 +51,41 @@
         color: #fff;
       }
       
-      main {
-        padding: 3rem 0;
-      }
-      
       .card {
         background: #111;
         border: 1px solid #1a1a1a;
-        border-radius: 4px;
+        border-radius: 8px;
         padding: 2rem;
-        margin-bottom: 2rem;
+        margin: 2rem 0;
       }
       
       .card h2 {
-        font-size: 0.9375rem;
-        font-weight: 400;
+        font-size: 1rem;
+        font-weight: 600;
         color: #fff;
         margin-bottom: 1.5rem;
       }
       
-      .card h2::before {
-        content: "$";
-        color: #555;
-        margin-right: 0.5rem;
-      }
-      
       input, textarea {
         width: 100%;
-        padding: 0.875rem 1rem;
+        padding: 1rem;
         margin-bottom: 1rem;
         background: #0a0a0a;
         border: 1px solid #222;
-        color: #e0e0e0;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 0.9375rem;
         font-family: inherit;
-        font-size: 0.875rem;
         outline: none;
         transition: border-color 0.2s;
       }
       
-      input:focus, textarea:focus {
-        border-color: #444;
+      input::placeholder, textarea::placeholder {
+        color: #444;
       }
       
-      input::placeholder, textarea::placeholder {
-        color: #333;
+      input:focus, textarea:focus {
+        border-color: #444;
       }
       
       textarea {
@@ -107,18 +95,19 @@
       }
       
       button {
-        padding: 0.75rem 1.5rem;
+        padding: 0.875rem 2rem;
         background: #fff;
         color: #0a0a0a;
         border: none;
-        font-family: inherit;
-        font-size: 0.8125rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
         cursor: pointer;
         transition: opacity 0.2s;
       }
       
-      button:hover:not(:disabled) {
-        opacity: 0.9;
+      button:hover {
+        opacity: 0.85;
       }
       
       button:disabled {
@@ -128,54 +117,53 @@
       }
       
       .message {
-        margin-top: 1rem;
-        font-size: 0.8125rem;
-      }
-      
-      .error { color: #c00; }
-      .success { color: #0a0; }
-      
-      .chapter-list {
         margin-top: 1.5rem;
-      }
-      
-      .chapter-item {
-        padding: 1rem;
-        border-bottom: 1px solid #1a1a1a;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      
-      .chapter-item:hover {
-        background: #0a0a0a;
-      }
-      
-      .chapter-item h3 {
         font-size: 0.875rem;
-        font-weight: 400;
-        color: #888;
       }
       
-      .chapter-item .meta {
-        font-size: 0.75rem;
-        color: #333;
-      }
+      .error { color: #c44; }
+      .success { color: #4c4; }
       
       .no-access {
         text-align: center;
-        padding: 6rem 2rem;
+        padding: 8rem 2rem;
       }
       
       .no-access h2 {
-        font-size: 1rem;
+        font-size: 1.5rem;
         color: #fff;
         margin-bottom: 1rem;
       }
       
       .no-access p {
         color: #555;
-        font-size: 0.875rem;
+      }
+      
+      .chapter-list {
+        margin-top: 1.5rem;
+      }
+      
+      .chapter-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #1a1a1a;
+      }
+      
+      .chapter-row:last-child {
+        border-bottom: none;
+      }
+      
+      .chapter-info h4 {
+        font-size: 0.9375rem;
+        color: #fff;
+        font-weight: 500;
+      }
+      
+      .chapter-info span {
+        font-size: 0.75rem;
+        color: #444;
       }
     </style>
   </head>
@@ -222,30 +210,30 @@
         
         document.getElementById('app').innerHTML = `
           <header class="container">
-            <h1>管理后台</h1>
+            <span class="logo">冰箱里的世界 · 管理后台</span>
             <nav class="nav">
-              <a href="/">首页</a>
+              <a href="/">返回首页</a>
               <a onclick="logout()">退出</a>
             </nav>
           </header>
           
-          <main class="container">
+          <div class="container">
             <div class="card">
-              <h2>发布新章节</h2>
+              <h2>✏️ 发布新章节</h2>
               <form id="chapterForm">
                 <input type="text" id="title" placeholder="章节标题" required />
                 <input type="number" id="order_num" placeholder="章节序号" required min="1" />
                 <textarea id="content" placeholder="在这里写小说内容..."></textarea>
-                <button type="submit" id="submitBtn">发布</button>
+                <button type="submit" id="submitBtn">发布章节</button>
               </form>
               <div class="message" id="message"></div>
             </div>
             
             <div class="card">
-              <h2>已发布章节</h2>
+              <h2>📖 已发布章节</h2>
               <div class="chapter-list" id="chapterList">加载中...</div>
             </div>
-          </main>
+          </div>
         `;
         
         document.getElementById('chapterForm').addEventListener('submit', async (e) => {
@@ -266,13 +254,13 @@
           if (error) {
             msg.innerHTML = '<p class="error">发布失败：' + error.message + '</p>';
           } else {
-            msg.innerHTML = '<p class="success">发布成功</p>';
+            msg.innerHTML = '<p class="success">✅ 发布成功</p>';
             document.getElementById('chapterForm').reset();
             loadChapters();
           }
           
           btn.disabled = false;
-          btn.textContent = '发布';
+          btn.textContent = '发布章节';
         });
         
         loadChapters();
@@ -285,15 +273,22 @@
           .order('order_num', { ascending: true });
         
         const list = document.getElementById('chapterList');
-        if (error || !chapters || chapters.length === 0) {
-          list.innerHTML = '<p style="color:#333;">暂无章节</p>';
+        if (error) {
+          list.innerHTML = '<p class="error">加载失败</p>';
+          return;
+        }
+        
+        if (!chapters || chapters.length === 0) {
+          list.innerHTML = '<p style="color:#444;">暂无章节</p>';
           return;
         }
         
         list.innerHTML = chapters.map(c => `
-          <div class="chapter-item">
-            <h3>第${c.order_num}章 ${c.title}</h3>
-            <span class="meta">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
+          <div class="chapter-row">
+            <div class="chapter-info">
+              <h4>第${c.order_num}章 · ${c.title}</h4>
+              <span>${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
+            </div>
           </div>
         `).join('');
       }
