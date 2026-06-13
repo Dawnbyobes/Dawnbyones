@@ -51,8 +51,35 @@
 
       .nav a:hover { color: #fff; }
 
+      /* 公告栏 */
+      .notice {
+        margin: 2rem 0;
+        padding: 1.25rem 1.5rem;
+        background: #111;
+        border: 1px solid #1a1a1a;
+        border-radius: 8px;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+
+      .notice-label {
+        font-size: 0.75rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        white-space: nowrap;
+        padding-top: 0.125rem;
+      }
+
+      .notice-content {
+        font-size: 0.9375rem;
+        color: #888;
+        line-height: 1.6;
+      }
+
       .hero {
-        padding: 4rem 0 3rem;
+        padding: 3rem 0 2rem;
       }
 
       .hero h1 {
@@ -67,18 +94,50 @@
         color: #555;
       }
 
-      .last-read {
-        margin-top: 1.5rem;
-        font-size: 0.875rem;
-      }
-
-      .last-read a {
-        color: #666;
+      /* 继续阅读 */
+      .continue-reading {
+        margin: 2rem 0 3rem;
+        padding: 1.5rem;
+        background: #111;
+        border: 1px solid #1a1a1a;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: border-color 0.2s;
         text-decoration: none;
-        transition: color 0.2s;
+        display: block;
       }
 
-      .last-read a:hover { color: #fff; }
+      .continue-reading:hover {
+        border-color: #333;
+      }
+
+      .continue-label {
+        font-size: 0.75rem;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.75rem;
+      }
+
+      .continue-title {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #fff;
+        margin-bottom: 0.25rem;
+      }
+
+      .continue-meta {
+        font-size: 0.8125rem;
+        color: #666;
+      }
+
+      .continue-arrow {
+        float: right;
+        color: #444;
+        font-size: 1.25rem;
+        line-height: 1;
+        margin-top: -2rem;
+      }
 
       .chapter-list {
         padding-bottom: 6rem;
@@ -133,11 +192,18 @@
     </header>
 
     <main class="container">
+      <!-- 公告栏 -->
+      <div class="notice">
+        <span class="notice-label">公告</span>
+        <p class="notice-content" id="noticeContent">加载中...</p>
+      </div>
+
       <div class="hero">
         <h1>目录</h1>
         <p>会员专属阅读区</p>
-        <div class="last-read" id="lastRead"></div>
       </div>
+
+      <div id="continueSection"></div>
 
       <div class="chapter-list" id="chapterList">
         <div class="empty">加载中...</div>
@@ -145,7 +211,7 @@
     </main>
 
     <footer class="container">
-      <p>2026 冰箱里的世界 · 仅供会员阅读 · 3075468865@qq.com</p>
+      <p>2026 冰箱里的世界 · 仅供会员阅读</p>
     </footer>
 
     <script type="module">
@@ -160,20 +226,31 @@
         window.location.href = '/login';
       }
 
+      // 公告内容（直接改这里）
+      const NOTICE_TEXT = '最新章节已更新，感谢各位读者的耐心等待。';
+
       async function loadChapters() {
+        // 显示公告
+        document.getElementById('noticeContent').textContent = NOTICE_TEXT;
+
         const { data: chapters, error } = await supabase
           .from('chapters')
           .select('*')
           .order('order_num', { ascending: true });
 
-        // 显示上次阅读
+        // 继续阅读
         const lastChapterId = localStorage.getItem('last_read_chapter');
+        const continueSection = document.getElementById('continueSection');
+
         if (lastChapterId && chapters) {
           const lastChapter = chapters.find(c => c.id === lastChapterId);
           if (lastChapter) {
-            document.getElementById('lastRead').innerHTML = `
-              <a href="/read?id=${lastChapterId}">
-                继续阅读：第${lastChapter.order_num}章 ${lastChapter.title} →
+            continueSection.innerHTML = `
+              <a class="continue-reading" href="/read?id=${lastChapterId}">
+                <div class="continue-label">继续阅读</div>
+                <div class="continue-title">第${lastChapter.order_num}章 ${lastChapter.title}</div>
+                <div class="continue-meta">上次阅读于 ${new Date(lastChapter.created_at).toLocaleDateString('zh-CN')}</div>
+                <div class="continue-arrow">→</div>
               </a>
             `;
           }
