@@ -9,24 +9,21 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
     <title>注册 - 冰箱里的世界</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      
-      body {
+      body { 
         font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
         background: #0a0a0a;
         color: #e5e5e5;
         line-height: 1.8;
         min-height: 100vh;
         display: flex;
-        align-items: center;
         justify-content: center;
+        align-items: center;
       }
-      
       .box {
         width: 100%;
         max-width: 400px;
         padding: 2rem;
       }
-      
       .back-link {
         display: inline-block;
         color: #555;
@@ -35,24 +32,18 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
         margin-bottom: 3rem;
         transition: color 0.2s;
       }
-      
-      .back-link:hover {
-        color: #fff;
-      }
-      
+      .back-link:hover { color: #fff; }
       h1 {
         font-size: 1.5rem;
         font-weight: 600;
         color: #fff;
         margin-bottom: 0.5rem;
       }
-      
       .subtitle {
         font-size: 0.875rem;
         color: #555;
         margin-bottom: 2.5rem;
       }
-      
       input {
         width: 100%;
         padding: 1rem;
@@ -66,15 +57,8 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
         outline: none;
         transition: border-color 0.2s;
       }
-      
-      input::placeholder {
-        color: #444;
-      }
-      
-      input:focus {
-        border-color: #444;
-      }
-      
+      input::placeholder { color: #444; }
+      input:focus { border-color: #444; }
       button {
         width: 100%;
         padding: 1rem;
@@ -88,30 +72,20 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
         cursor: pointer;
         transition: opacity 0.2s;
       }
-      
-      button:hover {
-        opacity: 0.85;
-      }
-      
-      button:disabled {
-        background: #222;
-        color: #555;
-        cursor: not-allowed;
-      }
-      
+      button:hover { opacity: 0.85; }
+      button:disabled { background: #222; color: #555; cursor: not-allowed; }
       .message {
         margin-top: 1.5rem;
         font-size: 0.875rem;
         text-align: center;
       }
-      
       .error { color: #c44; }
       .success { color: #4c4; }
     </style>
   </head>
   <body>
     <div class="box">
-      <a href="/" class="back-link">← 返回首页</a>
+      <a href="/" class="back-link">返回首页</a>
       <h1>会员注册</h1>
       <p class="subtitle">输入邀请码，开启阅读之旅</p>
       
@@ -159,7 +133,10 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
             return;
           }
           
-          const { error: authError } = await supabase.auth.signUp({ email, password });
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email,
+            password
+          });
           
           if (authError) {
             msg.innerHTML = `<p class="error">${authError.message}</p>`;
@@ -167,6 +144,10 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
             btn.textContent = '注册';
             return;
           }
+          
+          // 生成匿名编号
+          const readerId = '读者#' + Math.floor(1000 + Math.random() * 9000);
+          localStorage.setItem('reader_id', readerId);
           
           await supabase
             .from('invite_codes')

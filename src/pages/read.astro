@@ -10,7 +10,7 @@ const chapterId = Astro.url.searchParams.get('id');
     <title>阅读 - 冰箱里的世界</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      
+
       body {
         font-family: "Noto Serif SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
         background: #0a0a0a;
@@ -18,13 +18,13 @@ const chapterId = Astro.url.searchParams.get('id');
         line-height: 2;
         font-size: 1.125rem;
       }
-      
+
       .container {
-        max-width: 680px;
+        max-width: 720px;
         margin: 0 auto;
         padding: 0 2rem;
       }
-      
+
       header {
         padding: 1.5rem 0;
         display: flex;
@@ -36,7 +36,7 @@ const chapterId = Astro.url.searchParams.get('id');
         border-bottom: 1px solid #111;
         z-index: 10;
       }
-      
+
       .logo {
         font-size: 0.875rem;
         font-weight: 500;
@@ -44,7 +44,7 @@ const chapterId = Astro.url.searchParams.get('id');
         text-decoration: none;
         letter-spacing: 0.05em;
       }
-      
+
       .nav a {
         color: #555;
         text-decoration: none;
@@ -53,67 +53,209 @@ const chapterId = Astro.url.searchParams.get('id');
         transition: color 0.2s;
         cursor: pointer;
       }
-      
-      .nav a:hover {
-        color: #fff;
-      }
-      
+
+      .nav a:hover { color: #fff; }
+
       .chapter-header {
         padding: 4rem 0 3rem;
         text-align: center;
         border-bottom: 1px solid #111;
         margin-bottom: 3rem;
       }
-      
+
       .chapter-header h1 {
         font-size: 1.5rem;
         font-weight: 600;
         color: #fff;
         margin-bottom: 0.5rem;
       }
-      
+
       .chapter-header .meta {
         font-size: 0.75rem;
         color: #444;
         font-family: "PingFang SC", sans-serif;
       }
-      
-      .chapter-content {
-        padding-bottom: 6rem;
-        white-space: pre-wrap;
-        word-wrap: break-word;
+
+      /* 段落容器 */
+      .paragraph-wrapper {
+        position: relative;
+        padding: 0.5rem 0;
+        transition: background 0.2s;
       }
-      
-      .chapter-content p {
-        margin-bottom: 1.5rem;
+
+      .paragraph-wrapper:hover {
+        background: #0f0f0f;
+      }
+
+      .paragraph {
+        padding: 0.5rem 0;
         text-indent: 2em;
+        cursor: pointer;
       }
-      
-      .nav-bottom {
+
+      /* 评论气泡 */
+      .comment-bubble {
+        position: absolute;
+        right: -3rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #1a1a1a;
+        color: #666;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
+        font-family: "PingFang SC", sans-serif;
+      }
+
+      .paragraph-wrapper:hover .comment-bubble,
+      .comment-bubble.has-comments {
+        opacity: 1;
+      }
+
+      .comment-bubble.has-comments {
+        color: #888;
+        background: #222;
+      }
+
+      /* 评论面板 */
+      .comment-panel {
+        display: none;
+        background: #111;
+        border: 1px solid #1a1a1a;
+        border-radius: 8px;
+        margin: 1rem 0 2rem;
+        padding: 1.5rem;
+      }
+
+      .comment-panel.active {
+        display: block;
+      }
+
+      .comment-panel h4 {
+        font-size: 0.875rem;
+        color: #888;
+        margin-bottom: 1rem;
+        font-weight: 500;
+        font-family: "PingFang SC", sans-serif;
+      }
+
+      .comment-list {
+        margin-bottom: 1.5rem;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .comment-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid #1a1a1a;
+      }
+
+      .comment-item:last-child {
+        border-bottom: none;
+      }
+
+      .comment-header {
         display: flex;
         justify-content: space-between;
-        padding: 2rem 0 4rem;
-        border-top: 1px solid #111;
+        margin-bottom: 0.5rem;
       }
-      
-      .nav-bottom a {
+
+      .comment-author {
+        font-size: 0.8125rem;
+        color: #888;
+        font-family: "PingFang SC", sans-serif;
+      }
+
+      .comment-time {
+        font-size: 0.75rem;
+        color: #444;
+      }
+
+      .comment-content {
+        font-size: 0.9375rem;
+        color: #ccc;
+        line-height: 1.6;
+      }
+
+      .comment-input-area {
+        display: flex;
+        gap: 0.75rem;
+      }
+
+      .comment-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        background: #0a0a0a;
+        border: 1px solid #222;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 0.875rem;
+        font-family: inherit;
+        outline: none;
+      }
+
+      .comment-input::placeholder { color: #444; }
+
+      .comment-submit {
+        padding: 0.75rem 1.5rem;
+        background: #fff;
+        color: #0a0a0a;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+
+      .comment-submit:hover { opacity: 0.85; }
+      .comment-submit:disabled { background: #222; color: #555; }
+
+      .no-comments {
+        color: #444;
+        font-size: 0.875rem;
+        padding: 1rem 0;
+      }
+
+      .chapter-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2rem 0;
+        border-top: 1px solid #111;
+        border-bottom: 1px solid #111;
+        margin: 4rem 0;
+      }
+
+      .chapter-nav a {
         color: #555;
         text-decoration: none;
         font-size: 0.875rem;
         font-family: "PingFang SC", sans-serif;
         transition: color 0.2s;
+        padding: 0.5rem 0;
       }
-      
-      .nav-bottom a:hover {
-        color: #fff;
+
+      .chapter-nav a:hover { color: #fff; }
+      .chapter-nav a.disabled {
+        color: #222;
+        cursor: default;
+        pointer-events: none;
       }
-      
+
+      .chapter-nav .center {
+        color: #444;
+        font-size: 0.75rem;
+      }
+
       footer {
         padding: 3rem 0;
         text-align: center;
         font-size: 0.75rem;
         color: #222;
-        border-top: 1px solid #111;
       }
     </style>
   </head>
@@ -125,66 +267,237 @@ const chapterId = Astro.url.searchParams.get('id');
         <a onclick="logout()">退出</a>
       </nav>
     </header>
-    
+
     <main class="container">
       <div class="chapter-header">
-        <h1 id="title">加载中...</h1>
+        <h1 id="title">加载中</h1>
         <div class="meta" id="meta"></div>
       </div>
-      
-      <div class="chapter-content" id="content"></div>
-      
-      <div class="nav-bottom">
-        <a href="/novels">← 返回目录</a>
+
+      <div id="content"></div>
+
+      <div class="chapter-nav" id="chapterNav">
+        <a href="#" id="prevLink">上一章</a>
+        <span class="center" id="progress"></span>
+        <a href="#" id="nextLink">下一章</a>
       </div>
     </main>
-    
+
     <footer class="container">
-      <p>© 2026 冰箱里的世界 · 仅供会员阅读</p>
+      <p>2026 冰箱里的世界 · 仅供会员阅读</p>
     </footer>
-    
+
     <script type="module">
       import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-      
+
       const SUPABASE_URL = 'https://cwkqlwdeteitisdrlwmg.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3a3Fsd2RldGVpdGlzZHJsd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODkwMzMsImV4cCI6MjA5Njg2NTAzM30.hSbK_Z1rH9pXUwpfh2o5ZxbpkRUyy_7xDYcrmvLXgq8';
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-      
+
       const token = localStorage.getItem('sb_token');
       if (!token) {
         window.location.href = '/login';
       }
-      
-      const chapterId = new URLSearchParams(window.location.search).get('id');
-      if (!chapterId) {
+
+      // 获取或生成读者编号
+      let readerId = localStorage.getItem('reader_id');
+      if (!readerId) {
+        readerId = '读者#' + Math.floor(1000 + Math.random() * 9000);
+        localStorage.setItem('reader_id', readerId);
+      }
+
+      const currentId = new URLSearchParams(window.location.search).get('id');
+      if (!currentId) {
         window.location.href = '/novels';
       }
-      
+
+      let allChapters = [];
+      let currentComments = [];
+      let activePanelIndex = -1;
+
       async function loadChapter() {
-        const { data: chapter, error } = await supabase
+        // 加载章节列表
+        const { data: chapters } = await supabase
+          .from('chapters')
+          .select('id, order_num, title')
+          .order('order_num', { ascending: true });
+
+        allChapters = chapters || [];
+        const currentIndex = allChapters.findIndex(c => c.id === currentId);
+
+        // 加载当前章节
+        const { data: chapter } = await supabase
           .from('chapters')
           .select('*')
-          .eq('id', chapterId)
+          .eq('id', currentId)
           .single();
-        
-        if (error || !chapter) {
+
+        if (!chapter) {
           document.getElementById('title').textContent = '章节不存在';
           return;
         }
-        
-        document.getElementById('title').textContent = `第${chapter.order_num}章 · ${chapter.title}`;
+
+        document.getElementById('title').textContent = `第${chapter.order_num}章 ${chapter.title}`;
         document.getElementById('meta').textContent = new Date(chapter.created_at).toLocaleDateString('zh-CN');
-        
-        // 把内容按段落分割，每段包一个 <p>
+
+        // 分段渲染
         const paragraphs = chapter.content.split('\n').filter(p => p.trim());
-        document.getElementById('content').innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+        const contentDiv = document.getElementById('content');
+        
+        contentDiv.innerHTML = paragraphs.map((p, index) => `
+          <div class="paragraph-wrapper" data-index="${index}">
+            <div class="paragraph" onclick="togglePanel(${index})">${p}</div>
+            <div class="comment-bubble" id="bubble-${index}" onclick="togglePanel(${index})">评</div>
+            <div class="comment-panel" id="panel-${index}">
+              <h4>段落评论</h4>
+              <div class="comment-list" id="list-${index}"></div>
+              <div class="comment-input-area">
+                <input type="text" class="comment-input" id="input-${index}" placeholder="写下你的想法..." maxlength="500" />
+                <button class="comment-submit" onclick="submitComment(${index})">发送</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        // 加载所有评论
+        await loadAllComments();
+
+        // 导航
+        const prevLink = document.getElementById('prevLink');
+        const nextLink = document.getElementById('nextLink');
+
+        if (currentIndex > 0) {
+          prevLink.href = `/read?id=${allChapters[currentIndex - 1].id}`;
+          prevLink.classList.remove('disabled');
+        } else {
+          prevLink.classList.add('disabled');
+          prevLink.textContent = '已是第一章';
+        }
+
+        if (currentIndex < allChapters.length - 1) {
+          nextLink.href = `/read?id=${allChapters[currentIndex + 1].id}`;
+          nextLink.classList.remove('disabled');
+        } else {
+          nextLink.classList.add('disabled');
+          nextLink.textContent = '已是最后一章';
+        }
+
+        document.getElementById('progress').textContent = `${currentIndex + 1} / ${allChapters.length}`;
       }
-      
+
+      async function loadAllComments() {
+        const { data: comments } = await supabase
+          .from('comments')
+          .select('*')
+          .eq('chapter_id', currentId)
+          .order('created_at', { ascending: true });
+
+        currentComments = comments || [];
+
+        // 按段落分组统计
+        const countMap = {};
+        comments?.forEach(c => {
+          countMap[c.paragraph_index] = (countMap[c.paragraph_index] || 0) + 1;
+        });
+
+        // 更新气泡
+        Object.keys(countMap).forEach(idx => {
+          const bubble = document.getElementById(`bubble-${idx}`);
+          if (bubble) {
+            bubble.textContent = countMap[idx];
+            bubble.classList.add('has-comments');
+          }
+        });
+      }
+
+      window.togglePanel = function(index) {
+        const panel = document.getElementById(`panel-${index}`);
+        const isActive = panel.classList.contains('active');
+
+        // 关闭其他面板
+        document.querySelectorAll('.comment-panel.active').forEach(p => {
+          p.classList.remove('active');
+        });
+
+        if (!isActive) {
+          panel.classList.add('active');
+          activePanelIndex = index;
+          renderComments(index);
+          document.getElementById(`input-${index}`).focus();
+        } else {
+          activePanelIndex = -1;
+        }
+      };
+
+      function renderComments(index) {
+        const list = document.getElementById(`list-${index}`);
+        const comments = currentComments.filter(c => c.paragraph_index === index);
+
+        if (comments.length === 0) {
+          list.innerHTML = '<div class="no-comments">暂无评论，来说两句吧</div>';
+          return;
+        }
+
+        list.innerHTML = comments.map(c => `
+          <div class="comment-item">
+            <div class="comment-header">
+              <span class="comment-author">${c.reader_id}</span>
+              <span class="comment-time">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
+            </div>
+            <div class="comment-content">${escapeHtml(c.content)}</div>
+          </div>
+        `).join('');
+      }
+
+      window.submitComment = async function(index) {
+        const input = document.getElementById(`input-${index}`);
+        const content = input.value.trim();
+        if (!content) return;
+
+        const btn = document.querySelector(`#panel-${index} .comment-submit`);
+        btn.disabled = true;
+        btn.textContent = '发送中';
+
+        const { error } = await supabase
+          .from('comments')
+          .insert([{
+            chapter_id: currentId,
+            paragraph_index: index,
+            reader_id: readerId,
+            content: content
+          }]);
+
+        if (error) {
+          alert('发送失败：' + error.message);
+          btn.disabled = false;
+          btn.textContent = '发送';
+          return;
+        }
+
+        input.value = '';
+        btn.disabled = false;
+        btn.textContent = '发送';
+
+        // 重新加载评论
+        await loadAllComments();
+        renderComments(index);
+
+        // 更新气泡
+        const bubble = document.getElementById(`bubble-${index}`);
+        bubble.classList.add('has-comments');
+      };
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
       window.logout = function() {
         localStorage.removeItem('sb_token');
         window.location.href = '/';
       };
-      
+
       loadChapter();
     </script>
   </body>

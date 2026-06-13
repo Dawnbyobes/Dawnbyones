@@ -8,7 +8,7 @@
     <title>管理后台 - 冰箱里的世界</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      
+
       body {
         font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
         background: #0a0a0a;
@@ -16,13 +16,13 @@
         line-height: 1.8;
         min-height: 100vh;
       }
-      
+
       .container {
-        max-width: 800px;
+        max-width: 1000px;
         margin: 0 auto;
         padding: 0 2rem;
       }
-      
+
       header {
         padding: 1.5rem 0;
         display: flex;
@@ -30,14 +30,14 @@
         align-items: center;
         border-bottom: 1px solid #111;
       }
-      
+
       .logo {
         font-size: 0.875rem;
         font-weight: 500;
         color: #fff;
         letter-spacing: 0.05em;
       }
-      
+
       .nav a {
         color: #555;
         text-decoration: none;
@@ -46,11 +46,11 @@
         transition: color 0.2s;
         cursor: pointer;
       }
-      
+
       .nav a:hover {
         color: #fff;
       }
-      
+
       .card {
         background: #111;
         border: 1px solid #1a1a1a;
@@ -58,14 +58,20 @@
         padding: 2rem;
         margin: 2rem 0;
       }
-      
+
       .card h2 {
         font-size: 1rem;
         font-weight: 600;
         color: #fff;
         margin-bottom: 1.5rem;
       }
-      
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
       input, textarea {
         width: 100%;
         padding: 1rem;
@@ -79,25 +85,30 @@
         outline: none;
         transition: border-color 0.2s;
       }
-      
+
       input::placeholder, textarea::placeholder {
         color: #444;
       }
-      
+
       input:focus, textarea:focus {
         border-color: #444;
       }
-      
+
       textarea {
-        min-height: 400px;
+        min-height: 600px;
         resize: vertical;
-        line-height: 1.8;
+        line-height: 2;
+        font-size: 1rem;
       }
-      
+
+      .btn-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+      }
+
       button {
         padding: 0.875rem 2rem;
-        background: #fff;
-        color: #0a0a0a;
         border: none;
         border-radius: 6px;
         font-size: 0.875rem;
@@ -105,44 +116,56 @@
         cursor: pointer;
         transition: opacity 0.2s;
       }
-      
+
+      .btn-primary {
+        background: #fff;
+        color: #0a0a0a;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: #888;
+        border: 1px solid #333;
+      }
+
       button:hover {
         opacity: 0.85;
       }
-      
+
       button:disabled {
         background: #222;
         color: #555;
         cursor: not-allowed;
+        border: none;
       }
-      
+
       .message {
         margin-top: 1.5rem;
         font-size: 0.875rem;
       }
-      
+
       .error { color: #c44; }
       .success { color: #4c4; }
-      
+
       .no-access {
         text-align: center;
         padding: 8rem 2rem;
       }
-      
+
       .no-access h2 {
         font-size: 1.5rem;
         color: #fff;
         margin-bottom: 1rem;
       }
-      
+
       .no-access p {
         color: #555;
       }
-      
+
       .chapter-list {
         margin-top: 1.5rem;
       }
-      
+
       .chapter-row {
         display: flex;
         justify-content: space-between;
@@ -150,64 +173,95 @@
         padding: 1rem 0;
         border-bottom: 1px solid #1a1a1a;
       }
-      
+
       .chapter-row:last-child {
         border-bottom: none;
       }
-      
+
       .chapter-info h4 {
         font-size: 0.9375rem;
         color: #fff;
         font-weight: 500;
       }
-      
+
       .chapter-info span {
         font-size: 0.75rem;
         color: #444;
+      }
+
+      .chapter-actions {
+        display: flex;
+        gap: 1rem;
+      }
+
+      .chapter-actions a {
+        color: #555;
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: color 0.2s;
+        cursor: pointer;
+      }
+
+      .chapter-actions a:hover {
+        color: #fff;
+      }
+
+      .edit-form {
+        display: none;
+      }
+
+      .edit-form.active {
+        display: block;
+      }
+
+      .list-view.hidden {
+        display: none;
       }
     </style>
   </head>
   <body>
     <div id="app">
       <div class="no-access">
-        <h2>验证中...</h2>
+        <h2>验证中</h2>
         <p>请稍候</p>
       </div>
     </div>
-    
+
     <script type="module">
       import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-      
+
       const SUPABASE_URL = 'https://cwkqlwdeteitisdrlwmg.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3a3Fsd2RldGVpdGlzZHJsd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODkwMzMsImV4cCI6MjA5Njg2NTAzM30.hSbK_Z1rH9pXUwpfh2o5ZxbpkRUyy_7xDYcrmvLXgq8';
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-      
+
+      let editingId = null;
+
       async function checkAdmin() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           window.location.href = '/login';
           return;
         }
-        
+
         const email = session.user.email;
-        
+
         const { data: admin, error } = await supabase
           .from('admins')
           .select('*')
           .eq('email', email)
           .limit(1);
-        
+
         if (error || !admin || admin.length === 0) {
           document.getElementById('app').innerHTML = `
             <div class="no-access">
-              <h2>⛔ 无权访问</h2>
+              <h2>无权访问</h2>
               <p>你没有管理员权限</p>
               <p style="margin-top:1rem;"><a href="/" style="color:#555;">返回首页</a></p>
             </div>
           `;
           return;
         }
-        
+
         document.getElementById('app').innerHTML = `
           <header class="container">
             <span class="logo">冰箱里的世界 · 管理后台</span>
@@ -216,89 +270,160 @@
               <a onclick="logout()">退出</a>
             </nav>
           </header>
-          
+
           <div class="container">
-            <div class="card">
-              <h2>✏️ 发布新章节</h2>
+            <div class="card" id="createCard">
+              <h2 id="formTitle">发布新章节</h2>
               <form id="chapterForm">
-                <input type="text" id="title" placeholder="章节标题" required />
-                <input type="number" id="order_num" placeholder="章节序号" required min="1" />
+                <div class="form-row">
+                  <input type="text" id="title" placeholder="章节标题" required />
+                  <input type="number" id="order_num" placeholder="章节序号" required min="1" />
+                </div>
                 <textarea id="content" placeholder="在这里写小说内容..."></textarea>
-                <button type="submit" id="submitBtn">发布章节</button>
+                <div class="btn-group">
+                  <button type="submit" class="btn-primary" id="submitBtn">发布章节</button>
+                  <button type="button" class="btn-secondary" id="cancelBtn" style="display:none;" onclick="cancelEdit()">取消编辑</button>
+                </div>
               </form>
               <div class="message" id="message"></div>
             </div>
-            
+
             <div class="card">
-              <h2>📖 已发布章节</h2>
+              <h2>已发布章节</h2>
               <div class="chapter-list" id="chapterList">加载中...</div>
             </div>
           </div>
         `;
-        
-        document.getElementById('chapterForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const btn = document.getElementById('submitBtn');
-          btn.disabled = true;
-          btn.textContent = '发布中...';
-          
-          const title = document.getElementById('title').value.trim();
-          const order_num = parseInt(document.getElementById('order_num').value);
-          const content = document.getElementById('content').value.trim();
-          
-          const { error } = await supabase
-            .from('chapters')
-            .insert([{ title, order_num, content }]);
-          
-          const msg = document.getElementById('message');
-          if (error) {
-            msg.innerHTML = '<p class="error">发布失败：' + error.message + '</p>';
-          } else {
-            msg.innerHTML = '<p class="success">✅ 发布成功</p>';
-            document.getElementById('chapterForm').reset();
-            loadChapters();
-          }
-          
-          btn.disabled = false;
-          btn.textContent = '发布章节';
-        });
-        
+
+        document.getElementById('chapterForm').addEventListener('submit', handleSubmit);
         loadChapters();
       }
-      
+
+      async function handleSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+
+        const title = document.getElementById('title').value.trim();
+        const order_num = parseInt(document.getElementById('order_num').value);
+        const content = document.getElementById('content').value.trim();
+
+        let error;
+
+        if (editingId) {
+          // 更新章节
+          ({ error } = await supabase
+            .from('chapters')
+            .update({ title, order_num, content })
+            .eq('id', editingId));
+          btn.textContent = '更新中...';
+        } else {
+          // 新建章节
+          ({ error } = await supabase
+            .from('chapters')
+            .insert([{ title, order_num, content }]));
+          btn.textContent = '发布中...';
+        }
+
+        const msg = document.getElementById('message');
+        if (error) {
+          msg.innerHTML = '<p class="error">失败：' + error.message + '</p>';
+        } else {
+          msg.innerHTML = '<p class="success">' + (editingId ? '更新成功' : '发布成功') + '</p>';
+          document.getElementById('chapterForm').reset();
+          cancelEdit();
+          loadChapters();
+        }
+
+        btn.disabled = false;
+        btn.textContent = editingId ? '更新章节' : '发布章节';
+      }
+
+      window.editChapter = async function(id) {
+        const { data: chapter, error } = await supabase
+          .from('chapters')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error || !chapter) {
+          alert('加载失败');
+          return;
+        }
+
+        editingId = id;
+        document.getElementById('title').value = chapter.title;
+        document.getElementById('order_num').value = chapter.order_num;
+        document.getElementById('content').value = chapter.content;
+        document.getElementById('formTitle').textContent = '编辑章节';
+        document.getElementById('submitBtn').textContent = '更新章节';
+        document.getElementById('cancelBtn').style.display = 'inline-block';
+
+        // 滚动到编辑区
+        document.getElementById('createCard').scrollIntoView({ behavior: 'smooth' });
+      };
+
+      window.cancelEdit = function() {
+        editingId = null;
+        document.getElementById('chapterForm').reset();
+        document.getElementById('formTitle').textContent = '发布新章节';
+        document.getElementById('submitBtn').textContent = '发布章节';
+        document.getElementById('cancelBtn').style.display = 'none';
+        document.getElementById('message').innerHTML = '';
+      };
+
+      window.deleteChapter = async function(id) {
+        if (!confirm('确定要删除这个章节吗？')) return;
+
+        const { error } = await supabase
+          .from('chapters')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          alert('删除失败：' + error.message);
+        } else {
+          loadChapters();
+        }
+      };
+
       async function loadChapters() {
         const { data: chapters, error } = await supabase
           .from('chapters')
           .select('*')
           .order('order_num', { ascending: true });
-        
+
         const list = document.getElementById('chapterList');
         if (error) {
           list.innerHTML = '<p class="error">加载失败</p>';
           return;
         }
-        
+
         if (!chapters || chapters.length === 0) {
           list.innerHTML = '<p style="color:#444;">暂无章节</p>';
           return;
         }
-        
+
         list.innerHTML = chapters.map(c => `
           <div class="chapter-row">
             <div class="chapter-info">
               <h4>第${c.order_num}章 · ${c.title}</h4>
               <span>${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
             </div>
+            <div class="chapter-actions">
+              <a onclick="editChapter('${c.id}')">编辑</a>
+              <a onclick="deleteChapter('${c.id}')" style="color:#444;">删除</a>
+            </div>
           </div>
         `).join('');
       }
-      
+
       window.logout = function() {
         localStorage.removeItem('sb_token');
         supabase.auth.signOut();
         window.location.href = '/';
       };
-      
+
       checkAdmin();
     </script>
   </body>
