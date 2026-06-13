@@ -18,7 +18,7 @@
       }
 
       .container {
-        max-width: 1000px;
+        max-width: 800px;
         margin: 0 auto;
         padding: 0 2rem;
       }
@@ -47,9 +47,7 @@
         cursor: pointer;
       }
 
-      .nav a:hover {
-        color: #fff;
-      }
+      .nav a:hover { color: #fff; }
 
       .card {
         background: #111;
@@ -86,13 +84,8 @@
         transition: border-color 0.2s;
       }
 
-      input::placeholder, textarea::placeholder {
-        color: #444;
-      }
-
-      input:focus, textarea:focus {
-        border-color: #444;
-      }
+      input::placeholder, textarea::placeholder { color: #444; }
+      input:focus, textarea:focus { border-color: #444; }
 
       textarea {
         min-height: 600px;
@@ -128,16 +121,8 @@
         border: 1px solid #333;
       }
 
-      button:hover {
-        opacity: 0.85;
-      }
-
-      button:disabled {
-        background: #222;
-        color: #555;
-        cursor: not-allowed;
-        border: none;
-      }
+      button:hover { opacity: 0.85; }
+      button:disabled { background: #222; color: #555; cursor: not-allowed; border: none; }
 
       .message {
         margin-top: 1.5rem;
@@ -158,13 +143,9 @@
         margin-bottom: 1rem;
       }
 
-      .no-access p {
-        color: #555;
-      }
+      .no-access p { color: #555; }
 
-      .chapter-list {
-        margin-top: 1.5rem;
-      }
+      .chapter-list, .comment-list { margin-top: 1.5rem; }
 
       .chapter-row {
         display: flex;
@@ -174,9 +155,7 @@
         border-bottom: 1px solid #1a1a1a;
       }
 
-      .chapter-row:last-child {
-        border-bottom: none;
-      }
+      .chapter-row:last-child { border-bottom: none; }
 
       .chapter-info h4 {
         font-size: 0.9375rem;
@@ -202,21 +181,7 @@
         cursor: pointer;
       }
 
-      .chapter-actions a:hover {
-        color: #fff;
-      }
-
-      .edit-form {
-        display: none;
-      }
-
-      .edit-form.active {
-        display: block;
-      }
-
-      .list-view.hidden {
-        display: none;
-      }
+      .chapter-actions a:hover { color: #fff; }
     </style>
   </head>
   <body>
@@ -292,11 +257,17 @@
               <h2>已发布章节</h2>
               <div class="chapter-list" id="chapterList">加载中...</div>
             </div>
+
+            <div class="card">
+              <h2>评论管理</h2>
+              <div class="comment-list" id="adminCommentList">加载中...</div>
+            </div>
           </div>
         `;
 
         document.getElementById('chapterForm').addEventListener('submit', handleSubmit);
         loadChapters();
+        loadAdminComments();
       }
 
       async function handleSubmit(e) {
@@ -311,14 +282,12 @@
         let error;
 
         if (editingId) {
-          // 更新章节
           ({ error } = await supabase
             .from('chapters')
             .update({ title, order_num, content })
             .eq('id', editingId));
           btn.textContent = '更新中...';
         } else {
-          // 新建章节
           ({ error } = await supabase
             .from('chapters')
             .insert([{ title, order_num, content }]));
@@ -358,8 +327,6 @@
         document.getElementById('formTitle').textContent = '编辑章节';
         document.getElementById('submitBtn').textContent = '更新章节';
         document.getElementById('cancelBtn').style.display = 'inline-block';
-
-        // 滚动到编辑区
         document.getElementById('createCard').scrollIntoView({ behavior: 'smooth' });
       };
 
@@ -382,9 +349,10 @@
 
         if (error) {
           alert('删除失败：' + error.message);
-        } else {
-          loadChapters();
+          return;
         }
+
+        loadChapters();
       };
 
       async function loadChapters() {
@@ -416,6 +384,60 @@
             </div>
           </div>
         `).join('');
+      }
+
+      async function loadAdminComments() {
+        const { data: comments, error } = await supabase
+          .from('comments')
+          .select('*, chapters(title, order_num)')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        const list = document.getElementById('adminCommentList');
+        if (error) {
+          list.innerHTML = '<p class="error">加载失败</p>';
+          return;
+        }
+
+        if (!comments || comments.length === 0) {
+          list.innerHTML = '<p style="color:#444;">暂无评论</p>';
+          return;
+        }
+
+        list.innerHTML = comments.map(c => `
+          <div class="chapter-row">
+            <div class="chapter-info">
+              <h4>${c.reader_id} · 第${c.chapters?.order_num || '?'}章</h4>
+              <span style="color:#666;font-size:0.8125rem;">${escapeHtml(c.content)}</span>
+              <span style="color:#444;font-size:0.75rem;margin-left:1rem;">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
+            </div>
+            <div class="chapter-actions">
+              <a onclick="deleteComment('${c.id}')" style="color:#c44;">删除</a>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      window.deleteComment = async function(id) {
+        if (!confirm('确定删除这条评论？')) return;
+
+        const { error } = await supabase
+          .from('comments')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          alert('删除失败：' + error.message);
+          return;
+        }
+
+        loadAdminComments();
+      };
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
       }
 
       window.logout = function() {

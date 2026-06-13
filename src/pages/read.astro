@@ -121,7 +121,8 @@ const chapterId = Astro.url.searchParams.get('id');
 
       /* 评论区 */
       .comment-section {
-        margin: 4rem 0 6rem;
+        padding: 4rem 0 6rem;
+        border-top: 1px solid #111;
       }
 
       .comment-section h2 {
@@ -129,8 +130,12 @@ const chapterId = Astro.url.searchParams.get('id');
         font-weight: 600;
         color: #fff;
         margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #111;
+        font-family: "PingFang SC", sans-serif;
+      }
+
+      .comment-count {
+        color: #555;
+        font-weight: 400;
       }
 
       .comment-form {
@@ -153,6 +158,7 @@ const chapterId = Astro.url.searchParams.get('id');
       }
 
       .comment-textarea::placeholder { color: #444; }
+      .comment-textarea:focus { border-color: #333; }
 
       .comment-submit {
         padding: 0.75rem 2rem;
@@ -169,11 +175,7 @@ const chapterId = Astro.url.searchParams.get('id');
       .comment-submit:hover { opacity: 0.85; }
       .comment-submit:disabled { background: #222; color: #555; }
 
-      .comment-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-      }
+      .comment-list { display: flex; flex-direction: column; gap: 1.5rem; }
 
       .comment-item {
         padding: 1.5rem;
@@ -204,12 +206,84 @@ const chapterId = Astro.url.searchParams.get('id');
         font-size: 0.9375rem;
         color: #ccc;
         line-height: 1.8;
+        margin-bottom: 1rem;
       }
+
+      .comment-actions {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .comment-actions a {
+        color: #555;
+        text-decoration: none;
+        font-size: 0.8125rem;
+        font-family: "PingFang SC", sans-serif;
+        transition: color 0.2s;
+        cursor: pointer;
+      }
+
+      .comment-actions a:hover { color: #fff; }
+
+      .reply-form {
+        display: none;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #1a1a1a;
+      }
+
+      .reply-form.active { display: block; }
+
+      .reply-input {
+        width: 100%;
+        padding: 0.75rem;
+        background: #0a0a0a;
+        border: 1px solid #222;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 0.875rem;
+        font-family: inherit;
+        outline: none;
+        margin-bottom: 0.75rem;
+      }
+
+      .reply-input::placeholder { color: #444; }
+
+      .reply-submit {
+        padding: 0.5rem 1.25rem;
+        background: #fff;
+        color: #0a0a0a;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .reply-submit:disabled { background: #222; color: #555; }
+
+      .replies {
+        margin-top: 1rem;
+        padding-left: 1.5rem;
+        border-left: 2px solid #1a1a1a;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .reply-item {
+        padding: 1rem;
+        background: #0a0a0a;
+        border-radius: 6px;
+      }
+
+      .reply-item .comment-header { margin-bottom: 0.5rem; }
+      .reply-item .comment-content { margin-bottom: 0; font-size: 0.875rem; }
 
       .no-comments {
         text-align: center;
-        color: #444;
         padding: 3rem 0;
+        color: #444;
         font-size: 0.875rem;
       }
 
@@ -218,6 +292,7 @@ const chapterId = Astro.url.searchParams.get('id');
         text-align: center;
         font-size: 0.75rem;
         color: #222;
+        border-top: 1px solid #111;
       }
     </style>
   </head>
@@ -245,7 +320,7 @@ const chapterId = Astro.url.searchParams.get('id');
       </div>
 
       <div class="comment-section">
-        <h2>评论</h2>
+        <h2>评论 <span class="comment-count" id="commentCount"></span></h2>
         <div class="comment-form">
           <textarea class="comment-textarea" id="commentInput" placeholder="写下你的想法..."></textarea>
           <button class="comment-submit" id="submitBtn" onclick="submitComment()">发表评论</button>
@@ -284,6 +359,7 @@ const chapterId = Astro.url.searchParams.get('id');
       }
 
       let allChapters = [];
+      let commentsData = [];
 
       async function loadChapter() {
         const { data: chapters } = await supabase
@@ -336,33 +412,74 @@ const chapterId = Astro.url.searchParams.get('id');
       }
 
       async function loadComments() {
-        const { data: comments, error } = await supabase
+        const { data: comments } = await supabase
           .from('comments')
           .select('*')
           .eq('chapter_id', currentId)
+          .is('reply_to', null)
           .order('created_at', { ascending: false });
 
+        const { data: replies } = await supabase
+          .from('comments')
+          .select('*')
+          .eq('chapter_id', currentId)
+          .not('reply_to', 'is', null)
+          .order('created_at', { ascending: true });
+
+        commentsData = comments || [];
+
+        const replyMap = {};
+        replies?.forEach(r => {
+          if (!replyMap[r.reply_to]) replyMap[r.reply_to] = [];
+          replyMap[r.reply_to].push(r);
+        });
+
+        document.getElementById('commentCount').textContent = `(${commentsData.length})`;
+
         const list = document.getElementById('commentList');
-
-        if (error) {
-          list.innerHTML = '<div class="no-comments">加载失败</div>';
-          return;
-        }
-
-        if (!comments || comments.length === 0) {
+        if (!commentsData.length) {
           list.innerHTML = '<div class="no-comments">暂无评论，来说两句吧</div>';
           return;
         }
 
-        list.innerHTML = comments.map(c => `
-          <div class="comment-item">
+        list.innerHTML = commentsData.map(c => {
+          const itemReplies = replyMap[c.id] || [];
+          return renderComment(c, itemReplies);
+        }).join('');
+      }
+
+      function renderComment(c, replies) {
+        const replyHtml = replies.length ? `
+          <div class="replies">
+            ${replies.map(r => `
+              <div class="reply-item">
+                <div class="comment-header">
+                  <span class="comment-author">${r.reader_id}</span>
+                  <span class="comment-time">${new Date(r.created_at).toLocaleDateString('zh-CN')}</span>
+                </div>
+                <div class="comment-content">${escapeHtml(r.content)}</div>
+              </div>
+            `).join('')}
+          </div>
+        ` : '';
+
+        return `
+          <div class="comment-item" id="comment-${c.id}">
             <div class="comment-header">
-              <span class="comment-author">${escapeHtml(c.reader_id)}</span>
+              <span class="comment-author">${c.reader_id}</span>
               <span class="comment-time">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
             </div>
             <div class="comment-content">${escapeHtml(c.content)}</div>
+            <div class="comment-actions">
+              <a onclick="showReplyForm('${c.id}')">回复</a>
+            </div>
+            <div class="reply-form" id="reply-form-${c.id}">
+              <input type="text" class="reply-input" id="reply-input-${c.id}" placeholder="回复 ${c.reader_id}..." />
+              <button class="reply-submit" onclick="submitReply('${c.id}')">发送</button>
+            </div>
+            ${replyHtml}
           </div>
-        `).join('');
+        `;
       }
 
       window.submitComment = async function() {
@@ -372,7 +489,7 @@ const chapterId = Astro.url.searchParams.get('id');
 
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
-        btn.textContent = '发送中';
+        btn.textContent = '发表中';
 
         const { error } = await supabase
           .from('comments')
@@ -392,6 +509,36 @@ const chapterId = Astro.url.searchParams.get('id');
         input.value = '';
         btn.disabled = false;
         btn.textContent = '发表评论';
+        loadComments();
+      };
+
+      window.showReplyForm = function(commentId) {
+        const form = document.getElementById(`reply-form-${commentId}`);
+        form.classList.toggle('active');
+        if (form.classList.contains('active')) {
+          document.getElementById(`reply-input-${commentId}`).focus();
+        }
+      };
+
+      window.submitReply = async function(parentId) {
+        const input = document.getElementById(`reply-input-${parentId}`);
+        const content = input.value.trim();
+        if (!content) return;
+
+        const { error } = await supabase
+          .from('comments')
+          .insert([{
+            chapter_id: currentId,
+            reader_id: readerId,
+            content: content,
+            reply_to: parentId
+          }]);
+
+        if (error) {
+          alert('回复失败：' + error.message);
+          return;
+        }
+
         loadComments();
       };
 
