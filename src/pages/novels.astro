@@ -53,11 +53,11 @@
 
       /* 公告栏 */
       .notice {
-        margin: 2rem 0;
-        padding: 1.25rem 1.5rem;
         background: #111;
         border: 1px solid #1a1a1a;
         border-radius: 8px;
+        padding: 1.25rem 1.5rem;
+        margin: 2rem 0;
         display: flex;
         align-items: flex-start;
         gap: 1rem;
@@ -65,7 +65,7 @@
 
       .notice-label {
         font-size: 0.75rem;
-        color: #666;
+        color: #888;
         text-transform: uppercase;
         letter-spacing: 0.1em;
         white-space: nowrap;
@@ -74,7 +74,7 @@
 
       .notice-content {
         font-size: 0.9375rem;
-        color: #888;
+        color: #ccc;
         line-height: 1.6;
       }
 
@@ -94,49 +94,25 @@
         color: #555;
       }
 
-      /* 继续阅读 */
-      .continue-reading {
-        margin: 2rem 0 3rem;
-        padding: 1.5rem;
-        background: #111;
-        border: 1px solid #1a1a1a;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: border-color 0.2s;
+      /* 继续阅读按钮 */
+      .last-read {
+        margin-top: 2rem;
+      }
+
+      .last-read a {
+        display: inline-block;
+        padding: 1rem 2.5rem;
+        background: #fff;
+        color: #0a0a0a;
         text-decoration: none;
-        display: block;
-      }
-
-      .continue-reading:hover {
-        border-color: #333;
-      }
-
-      .continue-label {
-        font-size: 0.75rem;
-        color: #555;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        margin-bottom: 0.75rem;
-      }
-
-      .continue-title {
-        font-size: 1rem;
+        border-radius: 6px;
+        font-size: 0.9375rem;
         font-weight: 500;
-        color: #fff;
-        margin-bottom: 0.25rem;
+        transition: opacity 0.2s;
       }
 
-      .continue-meta {
-        font-size: 0.8125rem;
-        color: #666;
-      }
-
-      .continue-arrow {
-        float: right;
-        color: #444;
-        font-size: 1.25rem;
-        line-height: 1;
-        margin-top: -2rem;
+      .last-read a:hover {
+        opacity: 0.85;
       }
 
       .chapter-list {
@@ -193,17 +169,16 @@
 
     <main class="container">
       <!-- 公告栏 -->
-      <div class="notice">
+      <div class="notice" id="notice">
         <span class="notice-label">公告</span>
-        <p class="notice-content" id="noticeContent">加载中...</p>
+        <span class="notice-content" id="noticeContent">加载中...</span>
       </div>
 
       <div class="hero">
         <h1>目录</h1>
         <p>会员专属阅读区</p>
+        <div class="last-read" id="lastRead"></div>
       </div>
-
-      <div id="continueSection"></div>
 
       <div class="chapter-list" id="chapterList">
         <div class="empty">加载中...</div>
@@ -226,8 +201,8 @@
         window.location.href = '/login';
       }
 
-      // 公告内容（直接改这里）
-      const NOTICE_TEXT = '最新章节已更新，感谢各位读者的耐心等待。';
+      // 公告内容 - 改这里即可
+      const NOTICE_TEXT = '新章节已更新，欢迎阅读。';
 
       async function loadChapters() {
         // 显示公告
@@ -238,19 +213,14 @@
           .select('*')
           .order('order_num', { ascending: true });
 
-        // 继续阅读
+        // 显示继续阅读
         const lastChapterId = localStorage.getItem('last_read_chapter');
-        const continueSection = document.getElementById('continueSection');
-
         if (lastChapterId && chapters) {
           const lastChapter = chapters.find(c => c.id === lastChapterId);
           if (lastChapter) {
-            continueSection.innerHTML = `
-              <a class="continue-reading" href="/read?id=${lastChapterId}">
-                <div class="continue-label">继续阅读</div>
-                <div class="continue-title">第${lastChapter.order_num}章 ${lastChapter.title}</div>
-                <div class="continue-meta">上次阅读于 ${new Date(lastChapter.created_at).toLocaleDateString('zh-CN')}</div>
-                <div class="continue-arrow">→</div>
+            document.getElementById('lastRead').innerHTML = `
+              <a href="/read?id=${lastChapterId}">
+                继续阅读：第${lastChapter.order_num}章 ${lastChapter.title}
               </a>
             `;
           }
