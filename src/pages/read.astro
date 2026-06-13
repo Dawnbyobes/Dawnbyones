@@ -56,7 +56,6 @@ const chapterId = Astro.url.searchParams.get('id');
 
       .nav a:hover { color: #fff; }
 
-      /* 阅读设置栏 */
       .reader-settings {
         display: flex;
         gap: 2rem;
@@ -155,7 +154,6 @@ const chapterId = Astro.url.searchParams.get('id');
         font-size: 0.75rem;
       }
 
-      /* 评论区 */
       .comment-section {
         padding: 4rem 0 6rem;
         border-top: 1px solid #111;
@@ -318,6 +316,18 @@ const chapterId = Astro.url.searchParams.get('id');
         font-size: 0.875rem;
       }
 
+      .error-msg {
+        color: #c44;
+        font-size: 0.875rem;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #1a0a0a;
+        border-radius: 6px;
+        display: none;
+      }
+
+      .error-msg.active { display: block; }
+
       footer {
         padding: 3rem 0;
         text-align: center;
@@ -337,7 +347,6 @@ const chapterId = Astro.url.searchParams.get('id');
     </header>
 
     <main class="container">
-      <!-- 阅读设置 -->
       <div class="reader-settings">
         <div class="setting-group">
           <label>字号</label>
@@ -369,6 +378,7 @@ const chapterId = Astro.url.searchParams.get('id');
         <div class="comment-form">
           <textarea class="comment-textarea" id="commentInput" placeholder="写下你的想法..."></textarea>
           <button class="comment-submit" id="submitBtn" onclick="submitComment()">发表评论</button>
+          <div class="error-msg" id="errorMsg"></div>
         </div>
         <div class="comment-list" id="commentList">
           <div class="no-comments">加载中...</div>
@@ -405,8 +415,6 @@ const chapterId = Astro.url.searchParams.get('id');
 
       let allChapters = [];
       let commentsData = [];
-
-      // 阅读设置
       let fontSize = parseFloat(localStorage.getItem('reader_font_size')) || 1.125;
       let lineHeight = parseFloat(localStorage.getItem('reader_line_height')) || 2;
 
@@ -430,8 +438,14 @@ const chapterId = Astro.url.searchParams.get('id');
         applySettings();
       };
 
+      function showError(msg) {
+        const el = document.getElementById('errorMsg');
+        el.textContent = msg;
+        el.classList.add('active');
+        setTimeout(() => el.classList.remove('active'), 5000);
+      }
+
       async function loadChapter() {
-        // 保存阅读进度
         localStorage.setItem('last_read_chapter', currentId);
 
         const { data: chapters } = await supabase
@@ -486,12 +500,16 @@ const chapterId = Astro.url.searchParams.get('id');
       }
 
       async function loadComments() {
-        const { data: comments } = await supabase
+        const { data: comments, error: commentsError } = await supabase
           .from('comments')
           .select('*')
           .eq('chapter_id', currentId)
           .is('reply_to', null)
           .order('created_at', { ascending: false });
+
+        if (commentsError) {
+          console.error('加载评论失败:', commentsError);
+        }
 
         const { data: replies } = await supabase
           .from('comments')
@@ -559,26 +577,35 @@ const chapterId = Astro.url.searchParams.get('id');
       window.submitComment = async function() {
         const input = document.getElementById('commentInput');
         const content = input.value.trim();
-        if (!content) return;
+        if (!content) {
+          showError('请输入评论内容');
+          return;
+        }
 
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
         btn.textContent = '发表中';
 
-        const { error } = await supabase
+        console.log('发送评论:', { chapter_id: currentId, reader_id: readerId, content });
+
+        const { data, error } = await supabase
           .from('comments')
           .insert([{
             chapter_id: currentId,
             reader_id: readerId,
             content: content
-          }]);
+          }])
+          .select();
 
         if (error) {
-          alert('发送失败：' + error.message);
+          console.error('评论失败:', error);
+          showError('发送失败: ' + error.message);
           btn.disabled = false;
           btn.textContent = '发表评论';
           return;
         }
+
+        console.log('评论成功:', data);
 
         input.value = '';
         btn.disabled = false;
@@ -609,7 +636,7 @@ const chapterId = Astro.url.searchParams.get('id');
           }]);
 
         if (error) {
-          alert('回复失败：' + error.message);
+          showError('回复失败: ' + error.message);
           return;
         }
 
