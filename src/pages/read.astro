@@ -20,7 +20,7 @@ const chapterId = Astro.url.searchParams.get('id');
       }
 
       .container {
-        max-width: 720px;
+        max-width: 680px;
         margin: 0 auto;
         padding: 0 2rem;
       }
@@ -76,145 +76,15 @@ const chapterId = Astro.url.searchParams.get('id');
         font-family: "PingFang SC", sans-serif;
       }
 
-      .paragraph-wrapper {
-        position: relative;
-        padding: 0.5rem 0;
-        transition: background 0.2s;
+      .chapter-content {
+        padding-bottom: 4rem;
+        white-space: pre-wrap;
+        word-wrap: break-word;
       }
 
-      .paragraph-wrapper:hover {
-        background: #0f0f0f;
-      }
-
-      .paragraph {
-        padding: 0.5rem 0;
-        text-indent: 2em;
-        cursor: pointer;
-      }
-
-      .comment-bubble {
-        position: absolute;
-        right: -3rem;
-        top: 50%;
-        transform: translateY(-50%);
-        background: #1a1a1a;
-        color: #666;
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        cursor: pointer;
-        opacity: 0;
-        transition: opacity 0.2s;
-        font-family: "PingFang SC", sans-serif;
-      }
-
-      .paragraph-wrapper:hover .comment-bubble,
-      .comment-bubble.has-comments {
-        opacity: 1;
-      }
-
-      .comment-bubble.has-comments {
-        color: #888;
-        background: #222;
-      }
-
-      .comment-panel {
-        display: none;
-        background: #111;
-        border: 1px solid #1a1a1a;
-        border-radius: 8px;
-        margin: 1rem 0 2rem;
-        padding: 1.5rem;
-      }
-
-      .comment-panel.active {
-        display: block;
-      }
-
-      .comment-panel h4 {
-        font-size: 0.875rem;
-        color: #888;
-        margin-bottom: 1rem;
-        font-weight: 500;
-        font-family: "PingFang SC", sans-serif;
-      }
-
-      .comment-list {
+      .chapter-content p {
         margin-bottom: 1.5rem;
-        max-height: 300px;
-        overflow-y: auto;
-      }
-
-      .comment-item {
-        padding: 1rem 0;
-        border-bottom: 1px solid #1a1a1a;
-      }
-
-      .comment-item:last-child {
-        border-bottom: none;
-      }
-
-      .comment-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-      }
-
-      .comment-author {
-        font-size: 0.8125rem;
-        color: #888;
-        font-family: "PingFang SC", sans-serif;
-      }
-
-      .comment-time {
-        font-size: 0.75rem;
-        color: #444;
-      }
-
-      .comment-content {
-        font-size: 0.9375rem;
-        color: #ccc;
-        line-height: 1.6;
-      }
-
-      .comment-input-area {
-        display: flex;
-        gap: 0.75rem;
-      }
-
-      .comment-input {
-        flex: 1;
-        padding: 0.75rem 1rem;
-        background: #0a0a0a;
-        border: 1px solid #222;
-        border-radius: 6px;
-        color: #fff;
-        font-size: 0.875rem;
-        font-family: inherit;
-        outline: none;
-      }
-
-      .comment-input::placeholder { color: #444; }
-
-      .comment-submit {
-        padding: 0.75rem 1.5rem;
-        background: #fff;
-        color: #0a0a0a;
-        border: none;
-        border-radius: 6px;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: opacity 0.2s;
-      }
-
-      .comment-submit:hover { opacity: 0.85; }
-      .comment-submit:disabled { background: #222; color: #555; }
-
-      .no-comments {
-        color: #444;
-        font-size: 0.875rem;
-        padding: 1rem 0;
+        text-indent: 2em;
       }
 
       .chapter-nav {
@@ -224,7 +94,7 @@ const chapterId = Astro.url.searchParams.get('id');
         padding: 2rem 0;
         border-top: 1px solid #111;
         border-bottom: 1px solid #111;
-        margin: 4rem 0;
+        margin-bottom: 4rem;
       }
 
       .chapter-nav a {
@@ -237,6 +107,7 @@ const chapterId = Astro.url.searchParams.get('id');
       }
 
       .chapter-nav a:hover { color: #fff; }
+
       .chapter-nav a.disabled {
         color: #222;
         cursor: default;
@@ -246,6 +117,100 @@ const chapterId = Astro.url.searchParams.get('id');
       .chapter-nav .center {
         color: #444;
         font-size: 0.75rem;
+      }
+
+      /* 评论区 */
+      .comment-section {
+        margin: 4rem 0 6rem;
+      }
+
+      .comment-section h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #111;
+      }
+
+      .comment-form {
+        margin-bottom: 3rem;
+      }
+
+      .comment-textarea {
+        width: 100%;
+        padding: 1rem;
+        background: #111;
+        border: 1px solid #1a1a1a;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 0.9375rem;
+        font-family: inherit;
+        outline: none;
+        resize: vertical;
+        min-height: 100px;
+        margin-bottom: 1rem;
+      }
+
+      .comment-textarea::placeholder { color: #444; }
+
+      .comment-submit {
+        padding: 0.75rem 2rem;
+        background: #fff;
+        color: #0a0a0a;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+
+      .comment-submit:hover { opacity: 0.85; }
+      .comment-submit:disabled { background: #222; color: #555; }
+
+      .comment-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .comment-item {
+        padding: 1.5rem;
+        background: #111;
+        border: 1px solid #1a1a1a;
+        border-radius: 8px;
+      }
+
+      .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+
+      .comment-author {
+        font-size: 0.875rem;
+        color: #888;
+        font-family: "PingFang SC", sans-serif;
+      }
+
+      .comment-time {
+        font-size: 0.75rem;
+        color: #444;
+      }
+
+      .comment-content {
+        font-size: 0.9375rem;
+        color: #ccc;
+        line-height: 1.8;
+      }
+
+      .no-comments {
+        text-align: center;
+        color: #444;
+        padding: 3rem 0;
+        font-size: 0.875rem;
       }
 
       footer {
@@ -271,12 +236,23 @@ const chapterId = Astro.url.searchParams.get('id');
         <div class="meta" id="meta"></div>
       </div>
 
-      <div id="content"></div>
+      <div class="chapter-content" id="content"></div>
 
       <div class="chapter-nav" id="chapterNav">
         <a href="#" id="prevLink">上一章</a>
         <span class="center" id="progress"></span>
         <a href="#" id="nextLink">下一章</a>
+      </div>
+
+      <div class="comment-section">
+        <h2>评论</h2>
+        <div class="comment-form">
+          <textarea class="comment-textarea" id="commentInput" placeholder="写下你的想法..."></textarea>
+          <button class="comment-submit" id="submitBtn" onclick="submitComment()">发表评论</button>
+        </div>
+        <div class="comment-list" id="commentList">
+          <div class="no-comments">加载中...</div>
+        </div>
       </div>
     </main>
 
@@ -308,8 +284,6 @@ const chapterId = Astro.url.searchParams.get('id');
       }
 
       let allChapters = [];
-      let currentComments = [];
-      let activePanelIndex = -1;
 
       async function loadChapter() {
         const { data: chapters } = await supabase
@@ -335,24 +309,7 @@ const chapterId = Astro.url.searchParams.get('id');
         document.getElementById('meta').textContent = new Date(chapter.created_at).toLocaleDateString('zh-CN');
 
         const paragraphs = chapter.content.split('\n').filter(p => p.trim());
-        const contentDiv = document.getElementById('content');
-
-        contentDiv.innerHTML = paragraphs.map((p, index) => `
-          <div class="paragraph-wrapper" data-index="${index}">
-            <div class="paragraph" onclick="togglePanel(${index})">${p}</div>
-            <div class="comment-bubble" id="bubble-${index}" onclick="togglePanel(${index})"></div>
-            <div class="comment-panel" id="panel-${index}">
-              <h4>段落评论</h4>
-              <div class="comment-list" id="list-${index}"></div>
-              <div class="comment-input-area">
-                <input type="text" class="comment-input" id="input-${index}" placeholder="写下你的想法..." maxlength="500" />
-                <button class="comment-submit" onclick="submitComment(${index})">发送</button>
-              </div>
-            </div>
-          </div>
-        `).join('');
-
-        await loadAllComments();
+        document.getElementById('content').innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
 
         const prevLink = document.getElementById('prevLink');
         const nextLink = document.getElementById('nextLink');
@@ -374,54 +331,25 @@ const chapterId = Astro.url.searchParams.get('id');
         }
 
         document.getElementById('progress').textContent = `${currentIndex + 1} / ${allChapters.length}`;
+
+        loadComments();
       }
 
-      async function loadAllComments() {
-        const { data: comments } = await supabase
+      async function loadComments() {
+        const { data: comments, error } = await supabase
           .from('comments')
           .select('*')
           .eq('chapter_id', currentId)
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: false });
 
-        currentComments = comments || [];
+        const list = document.getElementById('commentList');
 
-        const countMap = {};
-        comments?.forEach(c => {
-          countMap[c.paragraph_index] = (countMap[c.paragraph_index] || 0) + 1;
-        });
-
-        Object.keys(countMap).forEach(idx => {
-          const bubble = document.getElementById(`bubble-${idx}`);
-          if (bubble) {
-            bubble.textContent = countMap[idx];
-            bubble.classList.add('has-comments');
-          }
-        });
-      }
-
-      window.togglePanel = function(index) {
-        const panel = document.getElementById(`panel-${index}`);
-        const isActive = panel.classList.contains('active');
-
-        document.querySelectorAll('.comment-panel.active').forEach(p => {
-          p.classList.remove('active');
-        });
-
-        if (!isActive) {
-          panel.classList.add('active');
-          activePanelIndex = index;
-          renderComments(index);
-          setTimeout(() => document.getElementById(`input-${index}`).focus(), 100);
-        } else {
-          activePanelIndex = -1;
+        if (error) {
+          list.innerHTML = '<div class="no-comments">加载失败</div>';
+          return;
         }
-      };
 
-      function renderComments(index) {
-        const list = document.getElementById(`list-${index}`);
-        const comments = currentComments.filter(c => c.paragraph_index === index);
-
-        if (comments.length === 0) {
+        if (!comments || comments.length === 0) {
           list.innerHTML = '<div class="no-comments">暂无评论，来说两句吧</div>';
           return;
         }
@@ -429,7 +357,7 @@ const chapterId = Astro.url.searchParams.get('id');
         list.innerHTML = comments.map(c => `
           <div class="comment-item">
             <div class="comment-header">
-              <span class="comment-author">${c.reader_id}</span>
+              <span class="comment-author">${escapeHtml(c.reader_id)}</span>
               <span class="comment-time">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
             </div>
             <div class="comment-content">${escapeHtml(c.content)}</div>
@@ -437,12 +365,12 @@ const chapterId = Astro.url.searchParams.get('id');
         `).join('');
       }
 
-      window.submitComment = async function(index) {
-        const input = document.getElementById(`input-${index}`);
+      window.submitComment = async function() {
+        const input = document.getElementById('commentInput');
         const content = input.value.trim();
         if (!content) return;
 
-        const btn = document.querySelector(`#panel-${index} .comment-submit`);
+        const btn = document.getElementById('submitBtn');
         btn.disabled = true;
         btn.textContent = '发送中';
 
@@ -450,7 +378,6 @@ const chapterId = Astro.url.searchParams.get('id');
           .from('comments')
           .insert([{
             chapter_id: currentId,
-            paragraph_index: index,
             reader_id: readerId,
             content: content
           }]);
@@ -458,19 +385,14 @@ const chapterId = Astro.url.searchParams.get('id');
         if (error) {
           alert('发送失败：' + error.message);
           btn.disabled = false;
-          btn.textContent = '发送';
+          btn.textContent = '发表评论';
           return;
         }
 
         input.value = '';
         btn.disabled = false;
-        btn.textContent = '发送';
-
-        await loadAllComments();
-        renderComments(index);
-
-        const bubble = document.getElementById(`bubble-${index}`);
-        bubble.classList.add('has-comments');
+        btn.textContent = '发表评论';
+        loadComments();
       };
 
       function escapeHtml(text) {
