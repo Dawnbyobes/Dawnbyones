@@ -145,7 +145,7 @@
 
       .no-access p { color: #555; }
 
-      .chapter-list, .comment-list { margin-top: 1.5rem; }
+      .chapter-list { margin-top: 1.5rem; }
 
       .chapter-row {
         display: flex;
@@ -257,17 +257,11 @@
               <h2>已发布章节</h2>
               <div class="chapter-list" id="chapterList">加载中...</div>
             </div>
-
-            <div class="card">
-              <h2>评论管理</h2>
-              <div class="comment-list" id="adminCommentList">加载中...</div>
-            </div>
           </div>
         `;
 
         document.getElementById('chapterForm').addEventListener('submit', handleSubmit);
         loadChapters();
-        loadAdminComments();
       }
 
       async function handleSubmit(e) {
@@ -384,60 +378,6 @@
             </div>
           </div>
         `).join('');
-      }
-
-      async function loadAdminComments() {
-        const { data: comments, error } = await supabase
-          .from('comments')
-          .select('*, chapters(title, order_num)')
-          .order('created_at', { ascending: false })
-          .limit(50);
-
-        const list = document.getElementById('adminCommentList');
-        if (error) {
-          list.innerHTML = '<p class="error">加载失败</p>';
-          return;
-        }
-
-        if (!comments || comments.length === 0) {
-          list.innerHTML = '<p style="color:#444;">暂无评论</p>';
-          return;
-        }
-
-        list.innerHTML = comments.map(c => `
-          <div class="chapter-row">
-            <div class="chapter-info">
-              <h4>${c.reader_id} · 第${c.chapters?.order_num || '?'}章</h4>
-              <span style="color:#666;font-size:0.8125rem;">${escapeHtml(c.content)}</span>
-              <span style="color:#444;font-size:0.75rem;margin-left:1rem;">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
-            </div>
-            <div class="chapter-actions">
-              <a onclick="deleteComment('${c.id}')" style="color:#c44;">删除</a>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      window.deleteComment = async function(id) {
-        if (!confirm('确定删除这条评论？')) return;
-
-        const { error } = await supabase
-          .from('comments')
-          .delete()
-          .eq('id', id);
-
-        if (error) {
-          alert('删除失败：' + error.message);
-          return;
-        }
-
-        loadAdminComments();
-      };
-
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
       }
 
       window.logout = function() {

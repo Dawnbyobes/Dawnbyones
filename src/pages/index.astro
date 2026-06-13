@@ -9,7 +9,11 @@ const title = "冰箱里的世界";
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
       
       body {
         font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
@@ -52,8 +56,8 @@ const title = "冰箱里的世界";
       }
       
       .hero {
-        padding: 8rem 0 4rem;
         text-align: center;
+        padding: 10rem 0 6rem;
       }
       
       .hero h1 {
@@ -68,37 +72,22 @@ const title = "冰箱里的世界";
         font-size: 1rem;
         color: #666;
         max-width: 480px;
-        margin: 0 auto;
+        margin: 0 auto 3rem;
       }
       
-      .badge {
+      .btn-primary {
         display: inline-block;
-        margin-top: 2rem;
-        padding: 0.5rem 1.25rem;
-        border: 1px solid #333;
-        border-radius: 100px;
-        font-size: 0.75rem;
-        color: #888;
-        letter-spacing: 0.1em;
-      }
-      
-      .cta {
-        margin-top: 3rem;
-      }
-      
-      .btn {
-        display: inline-block;
-        padding: 0.875rem 2.5rem;
+        padding: 1rem 3rem;
         background: #fff;
         color: #0a0a0a;
         text-decoration: none;
         border-radius: 6px;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         font-weight: 500;
         transition: opacity 0.2s;
       }
       
-      .btn:hover {
+      .btn-primary:hover {
         opacity: 0.85;
       }
       
@@ -153,19 +142,15 @@ const title = "冰箱里的世界";
     <header class="container">
       <span class="logo">{title}</span>
       <nav class="nav">
-        <a href="/login">登录</a>
-        <a href="/register">注册</a>
+        <a href="/register">邀请码注册</a>
       </nav>
     </header>
     
     <main>
       <div class="hero container">
         <h1>冰箱里的世界</h1>
-        <p>一个私密的阅读空间。只有受邀者才能进入，在这里，文字是唯一的通行证。</p>
-        <span class="badge">邀请制会员</span>
-        <div class="cta">
-          <a href="/register" class="btn">使用邀请码注册</a>
-        </div>
+        <p>一个私密的阅读空间。只有受邀者才能进入。</p>
+        <a href="/login" class="btn-primary">会员登录</a>
       </div>
       
       <div class="divider"></div>
@@ -174,7 +159,7 @@ const title = "冰箱里的世界";
         <h2>关于本站</h2>
         <div class="feature">
           <h3>私密阅读</h3>
-          <p>仅限受邀会员访问，每一篇文字都是为你而写。</p>
+          <p>仅限受邀会员访问。</p>
         </div>
         <div class="feature">
           <h3>纯粹体验</h3>
@@ -188,7 +173,7 @@ const title = "冰箱里的世界";
     </main>
     
     <footer class="container">
-      <p>© 2026 {title} · 仅供会员阅读</p>
+      <p>2026 {title} · 仅供会员阅读</p>
     </footer>
   </body>
 </html>
