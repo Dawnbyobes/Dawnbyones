@@ -5,9 +5,8 @@ import Header from '../components/Header.astro';
 
 <Layout title="目录 - 冰箱里的世界">
   <Header />
-  
+
   <main class="container">
-    <!-- 公告栏 -->
     <div class="notice" id="notice">
       <span class="notice-label">公告</span>
       <span class="notice-content" id="noticeContent">加载中...</span>
@@ -18,8 +17,7 @@ import Header from '../components/Header.astro';
       <p>会员专属阅读区</p>
       <div class="last-read" id="lastRead"></div>
     </div>
-    
-    <!-- 搜索栏 -->
+
     <div class="search-bar">
       <input type="text" id="searchInput" placeholder="搜索章节标题..." />
       <span class="search-count" id="searchCount"></span>
@@ -36,157 +34,106 @@ import Header from '../components/Header.astro';
 </Layout>
 
 <script type="module">
-  import { 
-    getChapters, getAnnouncement, getBookmarks, getSession 
-  } from '/lib/supabase.js';
+  import { getChapters, getAnnouncement, getBookmarks, getSession } from '/lib/supabase.js';
   import { debounce, highlightText } from '/lib/utils.js';
-  
-  // 检查认证
+
   const session = await getSession();
-  if (!session) {
-    window.location.href = '/login';
-  }
-  
+  if (!session) window.location.href = '/login';
+
   let allChapters = [];
   let bookmarksMap = new Set();
-  
+
   async function loadData() {
-    // 加载公告
     const noticeText = await getAnnouncement();
     document.getElementById('noticeContent').textContent = noticeText;
-    
-    // 加载章节
     const { data: chapters, error } = await getChapters();
     allChapters = chapters || [];
-    
-    if (error) {
-      document.getElementById('chapterList').innerHTML = '<div class="empty">加载失败</div>';
-      return;
-    }
-    
-    // 加载书签
+    if (error) { document.getElementById('chapterList').innerHTML = '<div class="empty">加载失败</div>'; return; }
     const { data: bookmarks } = await getBookmarks();
     bookmarksMap = new Set((bookmarks || []).map(b => b.chapter_id));
-    
-    // 显示继续阅读
     const lastChapterId = localStorage.getItem('last_read_chapter');
     if (lastChapterId) {
       const lastChapter = allChapters.find(c => c.id === lastChapterId);
       if (lastChapter) {
-        document.getElementById('lastRead').innerHTML = `
-          <a href="/read?id=${lastChapterId}" class="btn btn-primary">
-            继续阅读：第${lastChapter.order_num}章 ${lastChapter.title}
-          </a>
-        `;
+        document.getElementById('lastRead').innerHTML = `<a href="/read?id=${lastChapterId}" class="btn btn-primary">继续阅读：第${lastChapter.order_num}章 ${lastChapter.title}</a>`;
       }
     }
-    
     renderChapters(allChapters);
   }
-  
+
   function renderChapters(chapters, keyword = '') {
     const list = document.getElementById('chapterList');
     const countEl = document.getElementById('searchCount');
-    
-    if (!chapters || chapters.length === 0) {
-      list.innerHTML = '<div class="empty">暂无章节</div>';
-      countEl.textContent = '';
-      return;
-    }
-    
+    if (!chapters || chapters.length === 0) { list.innerHTML = '<div class="empty">暂无章节</div>'; countEl.textContent = ''; return; }
     countEl.textContent = keyword ? `找到 ${chapters.length} 个结果` : `共 ${chapters.length} 章`;
-    
     list.innerHTML = chapters.map(c => {
       const isBookmarked = bookmarksMap.has(c.id);
       const titleHtml = keyword ? highlightText(c.title, keyword) : c.title;
-      
       return `
         <div class="chapter-item" onclick="location.href='/read?id=${c.id}'">
           <div class="chapter-main">
-            <h3>第${c.order_num}章 · ${titleHtml}</h3>
-            <div class="meta">${new Date(c.created_at).toLocaleDateString('zh-CN')}</div>
+            <div class="chapter-num">${c.order_num}</div>
+            <div class="chapter-info">
+              <h3>${titleHtml}</h3>
+              <div class="meta">${new Date(c.created_at).toLocaleDateString('zh-CN')}</div>
+            </div>
           </div>
-          ${isBookmarked ? '<span class="bookmark-badge" title="已收藏">★</span>' : ''}
+          ${isBookmarked ? '<span class="bookmark-badge">★</span>' : ''}
         </div>
       `;
     }).join('');
   }
-  
-  // 搜索功能
+
   const searchInput = document.getElementById('searchInput');
   searchInput?.addEventListener('input', debounce((e) => {
     const keyword = e.target.value.trim().toLowerCase();
-    if (!keyword) {
-      renderChapters(allChapters);
-      return;
-    }
-    
-    const filtered = allChapters.filter(c => 
-      c.title.toLowerCase().includes(keyword) ||
-      c.order_num.toString().includes(keyword)
-    );
+    if (!keyword) { renderChapters(allChapters); return; }
+    const filtered = allChapters.filter(c => c.title.toLowerCase().includes(keyword) || c.order_num.toString().includes(keyword));
     renderChapters(filtered, keyword);
   }, 200));
-  
+
   loadData();
 </script>
 
 <style>
   .notice {
-    background: var(--bg-secondary);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     padding: 1.25rem 1.5rem;
     margin: 2rem 0;
     display: flex;
     align-items: flex-start;
     gap: 1rem;
   }
-
   .notice-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--accent-light);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
     white-space: nowrap;
-    padding-top: 0.125rem;
+    padding-top: 0.25rem;
   }
-
   .notice-content {
     font-size: 0.9375rem;
     color: var(--text-secondary);
     line-height: 1.6;
   }
-
-  .hero {
-    padding: 2rem 0 1.5rem;
-  }
-
+  .hero { padding: 2rem 0 1.5rem; }
   .hero h1 {
     font-size: 1.75rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.375rem;
   }
-
-  .hero p {
-    font-size: 0.875rem;
-    color: var(--text-dim);
-  }
-
-  .last-read {
-    margin-top: 1.5rem;
-  }
-  
-  .search-bar {
-    margin: 1.5rem 0;
-    position: relative;
-  }
-  
-  .search-bar input {
-    padding-right: 6rem;
-  }
-  
+  .hero p { font-size: 0.875rem; color: var(--text-muted); }
+  .last-read { margin-top: 1.5rem; }
+  .search-bar { margin: 1.5rem 0; position: relative; }
+  .search-bar input { padding-right: 6rem; }
   .search-count {
     position: absolute;
     right: 1rem;
@@ -196,52 +143,62 @@ import Header from '../components/Header.astro';
     color: var(--text-faint);
     pointer-events: none;
   }
-
-  .chapter-list {
-    padding-bottom: 4rem;
-  }
-
+  .chapter-list { padding-bottom: 4rem; }
   .chapter-item {
-    padding: 1.25rem 0;
-    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--radius);
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: all 0.25s;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border: 1px solid transparent;
   }
-
-  .chapter-item:last-child {
-    border-bottom: none;
-  }
-
   .chapter-item:hover {
-    opacity: 0.7;
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+    transform: translateX(4px);
   }
-
+  .chapter-main { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+  .chapter-num {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent-dim) 0%, var(--accent) 100%);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+  .chapter-info { min-width: 0; }
   .chapter-item h3 {
-    font-size: 1rem;
+    font-size: 0.9375rem;
     font-weight: 500;
     color: var(--text-primary);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-
-  .chapter-item .meta {
-    font-size: 0.75rem;
-    color: var(--text-faint);
-  }
-  
+  .chapter-item .meta { font-size: 0.75rem; color: var(--text-faint); }
   .bookmark-badge {
-    color: #ca4;
-    font-size: 0.875rem;
+    color: var(--accent-light);
+    font-size: 1rem;
     margin-left: 0.5rem;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 6px var(--accent-glow));
   }
-
   footer {
     padding: 2rem 0;
     text-align: center;
     font-size: 0.75rem;
     color: var(--text-faint);
     border-top: 1px solid var(--border-color);
+    letter-spacing: 0.05em;
   }
 </style>

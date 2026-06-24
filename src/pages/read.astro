@@ -7,9 +7,8 @@ const chapterId = Astro.url.searchParams.get('id');
 
 <Layout title="阅读 - 冰箱里的世界">
   <ReaderHeader />
-  
+
   <main class="container-reader">
-    <!-- 阅读工具栏 -->
     <div class="reader-toolbar">
       <div class="toolbar-group">
         <label>字号</label>
@@ -56,22 +55,18 @@ const chapterId = Astro.url.searchParams.get('id');
       <div class="empty">加载中...</div>
     </div>
 
-    <!-- 章节导航 -->
     <div class="chapter-nav" id="chapterNav">
       <a href="#" id="prevLink">&larr; 上一章</a>
       <span class="center" id="progress"></span>
       <a href="#" id="nextLink">下一章 &rarr;</a>
     </div>
 
-    <!-- 评论区 -->
     <div class="comments-section" id="commentsSection">
       <h3>评论</h3>
-      
       <form class="comment-form" id="commentForm">
         <textarea id="commentInput" placeholder="写下你的想法..." rows="3"></textarea>
         <button type="submit" class="btn btn-primary btn-small" id="commentBtn">发表评论</button>
       </form>
-      
       <div class="comments-list" id="commentsList">
         <div class="empty">加载中...</div>
       </div>
@@ -84,30 +79,21 @@ const chapterId = Astro.url.searchParams.get('id');
 </Layout>
 
 <script type="module">
-  import { 
+  import {
     getChapters, getChapter, getSession,
     saveProgress, getProgress,
     toggleBookmark, getBookmarks,
-    getComments, addComment, deleteComment,
-    deleteChapter as deleteCommentById
+    getComments, addComment, deleteComment
   } from '/lib/supabase.js';
   import { throttle, formatDate } from '/lib/utils.js';
-  
-  // 认证检查
+
   const session = await getSession();
-  if (!session) {
-    window.location.href = '/login';
-  }
-  
+  if (!session) window.location.href = '/login';
+
   const currentId = new URLSearchParams(window.location.search).get('id');
-  if (!currentId) {
-    window.location.href = '/novels';
-  }
-  
-  // 保存最后阅读
+  if (!currentId) window.location.href = '/novels';
   localStorage.setItem('last_read_chapter', currentId);
-  
-  // 阅读设置状态
+
   let fontSize = parseFloat(localStorage.getItem('reader_font_size')) || 1.125;
   let lineHeight = parseFloat(localStorage.getItem('reader_line_height')) || 2;
   let fontFamily = localStorage.getItem('reader_font_family') || 'serif';
@@ -116,247 +102,137 @@ const chapterId = Astro.url.searchParams.get('id');
   let isBookmarked = false;
   let myUserId = session?.user?.id;
   let isAdmin = false;
-  
-  // 检查是否为管理员
-  try {
-    const { checkIsAdmin } = await import('/lib/supabase.js');
-    isAdmin = await checkIsAdmin();
-  } catch(e) { /* ignore */ }
-  
+
+  try { const { checkIsAdmin } = await import('/lib/supabase.js'); isAdmin = await checkIsAdmin(); } catch(e) {}
+
   function applySettings() {
     const content = document.getElementById('content');
     const main = document.querySelector('main');
     if (!content) return;
-    
     content.style.fontSize = fontSize + 'rem';
     content.style.lineHeight = lineHeight;
-    content.style.fontFamily = fontFamily === 'serif' 
+    content.style.fontFamily = fontFamily === 'serif'
       ? '"Noto Serif SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif'
       : '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif';
-    
-    // 页宽设置
     if (main) {
       main.classList.remove('container-reader', 'container-narrow', 'container-wide');
-      if (pageWidth === 'narrow') {
-        main.classList.add('container-narrow');
-      } else if (pageWidth === 'wide') {
-        main.classList.add('container-wide');
-      } else {
-        main.classList.add('container-reader');
-      }
+      if (pageWidth === 'narrow') main.classList.add('container-narrow');
+      else if (pageWidth === 'wide') main.classList.add('container-wide');
+      else main.classList.add('container-reader');
     }
   }
-  
-  // 工具栏事件
+
   document.querySelectorAll('.btn-tune').forEach(btn => {
     btn.addEventListener('click', () => {
       const fontDelta = parseFloat(btn.dataset.font);
       const lineDelta = parseFloat(btn.dataset.line);
       const fontFam = btn.dataset.fontFamily;
       const width = btn.dataset.width;
-      
-      if (!isNaN(fontDelta)) {
-        fontSize = Math.max(0.875, Math.min(1.5, fontSize + fontDelta));
-        localStorage.setItem('reader_font_size', fontSize);
-      }
-      if (!isNaN(lineDelta)) {
-        lineHeight = Math.max(1.5, Math.min(3, lineHeight + lineDelta));
-        localStorage.setItem('reader_line_height', lineHeight);
-      }
-      if (fontFam) {
-        fontFamily = fontFam;
-        localStorage.setItem('reader_font_family', fontFamily);
-      }
-      if (width) {
-        pageWidth = width;
-        localStorage.setItem('reader_page_width', pageWidth);
-      }
-      
+      if (!isNaN(fontDelta)) { fontSize = Math.max(0.875, Math.min(1.5, fontSize + fontDelta)); localStorage.setItem('reader_font_size', fontSize); }
+      if (!isNaN(lineDelta)) { lineHeight = Math.max(1.5, Math.min(3, lineHeight + lineDelta)); localStorage.setItem('reader_line_height', lineHeight); }
+      if (fontFam) { fontFamily = fontFam; localStorage.setItem('reader_font_family', fontFamily); }
+      if (width) { pageWidth = width; localStorage.setItem('reader_page_width', pageWidth); }
       applySettings();
     });
   });
-  
-  // 书签功能
+
   document.getElementById('bookmarkBtn')?.addEventListener('click', async () => {
     const btn = document.getElementById('bookmarkBtn');
     btn.disabled = true;
-    
     const { bookmarked } = await toggleBookmark(currentId);
     isBookmarked = bookmarked;
     document.getElementById('bookmarkIcon').textContent = bookmarked ? '★' : '☆';
     btn.classList.toggle('active', bookmarked);
-    
     btn.disabled = false;
   });
-  
-  // 加载章节内容
+
   async function loadChapter() {
-    // 获取所有章节（用于导航）
     const { data: chapters } = await getChapters();
     allChapters = chapters || [];
     const currentIndex = allChapters.findIndex(c => c.id === currentId);
-    
-    // 获取当前章节内容
     const { data: chapter, error } = await getChapter(currentId);
-    
     if (error || !chapter) {
       document.getElementById('title').textContent = '章节不存在';
       document.getElementById('content').innerHTML = '<div class="empty">章节不存在或已被删除</div>';
       return;
     }
-    
     document.title = `第${chapter.order_num}章 ${chapter.title} - 冰箱里的世界`;
     document.getElementById('title').textContent = `第${chapter.order_num}章 ${chapter.title}`;
     document.getElementById('meta').textContent = formatDate(chapter.created_at);
-    
-    // 渲染内容
     const paragraphs = chapter.content.split('\n').filter(p => p.trim());
     document.getElementById('content').innerHTML = paragraphs.map(p => `<p>${escapeHtml(p)}</p>`).join('');
-    
     applySettings();
-    
-    // 恢复阅读进度
     const savedProgress = await getProgress(currentId);
-    if (savedProgress > 100) {
-      setTimeout(() => {
-        window.scrollTo({ top: savedProgress, behavior: 'smooth' });
-      }, 300);
-    }
-    
-    // 更新导航
+    if (savedProgress > 100) setTimeout(() => window.scrollTo({ top: savedProgress, behavior: 'smooth' }), 300);
     const prevLink = document.getElementById('prevLink');
     const nextLink = document.getElementById('nextLink');
-    
-    if (currentIndex > 0) {
-      prevLink.href = `/read?id=${allChapters[currentIndex - 1].id}`;
-      prevLink.classList.remove('disabled');
-      prevLink.innerHTML = '&larr; 上一章';
-    } else {
-      prevLink.classList.add('disabled');
-      prevLink.innerHTML = '已是第一章';
-      prevLink.href = '#';
-    }
-    
-    if (currentIndex < allChapters.length - 1) {
-      nextLink.href = `/read?id=${allChapters[currentIndex + 1].id}`;
-      nextLink.classList.remove('disabled');
-      nextLink.innerHTML = '下一章 &rarr;';
-    } else {
-      nextLink.classList.add('disabled');
-      nextLink.innerHTML = '已是最后一章';
-      nextLink.href = '#';
-    }
-    
+    if (currentIndex > 0) { prevLink.href = `/read?id=${allChapters[currentIndex - 1].id}`; prevLink.classList.remove('disabled'); prevLink.innerHTML = '&larr; 上一章'; }
+    else { prevLink.classList.add('disabled'); prevLink.innerHTML = '已是第一章'; prevLink.href = '#'; }
+    if (currentIndex < allChapters.length - 1) { nextLink.href = `/read?id=${allChapters[currentIndex + 1].id}`; nextLink.classList.remove('disabled'); nextLink.innerHTML = '下一章 &rarr;'; }
+    else { nextLink.classList.add('disabled'); nextLink.innerHTML = '已是最后一章'; nextLink.href = '#'; }
     document.getElementById('progress').textContent = `${currentIndex + 1} / ${allChapters.length}`;
-    
-    // 检查书签状态
     const { data: bookmarks } = await getBookmarks();
     isBookmarked = (bookmarks || []).some(b => b.chapter_id === currentId);
     document.getElementById('bookmarkIcon').textContent = isBookmarked ? '★' : '☆';
     document.getElementById('bookmarkBtn').classList.toggle('active', isBookmarked);
-    
-    // 加载评论
     loadComments();
   }
-  
-  // 保存阅读进度（节流）
+
   const throttledSaveProgress = throttle(async () => {
     if (!currentId) return;
     const scrollY = window.scrollY;
-    if (scrollY > 100) {
-      await saveProgress(currentId, scrollY);
-    }
+    if (scrollY > 100) await saveProgress(currentId, scrollY);
   }, 5000);
-  
   window.addEventListener('scroll', throttledSaveProgress);
-  
-  // 评论功能
+
   async function loadComments() {
     const list = document.getElementById('commentsList');
     const { data: comments, error } = await getComments(currentId);
-    
-    if (error) {
-      list.innerHTML = '<div class="empty">评论加载失败</div>';
-      return;
-    }
-    
-    if (!comments || comments.length === 0) {
-      list.innerHTML = '<div class="empty">暂无评论，来发表第一条吧</div>';
-      return;
-    }
-    
+    if (error) { list.innerHTML = '<div class="empty">评论加载失败</div>'; return; }
+    if (!comments || comments.length === 0) { list.innerHTML = '<div class="empty">暂无评论，来发表第一条吧</div>'; return; }
     list.innerHTML = comments.map(c => `
       <div class="comment-item" data-id="${c.id}">
         <div class="comment-header">
           <span class="comment-author">${escapeHtml(c.reader_id)}</span>
           <span class="comment-time">${formatDate(c.created_at)}</span>
-          ${(c.user_id === myUserId || isAdmin) ? `
-            <button class="comment-delete" data-id="${c.id}">删除</button>
-          ` : ''}
+          ${(c.user_id === myUserId || isAdmin) ? `<button class="comment-delete" data-id="${c.id}">删除</button>` : ''}
         </div>
         <div class="comment-body">${escapeHtml(c.content)}</div>
       </div>
     `).join('');
-    
-    // 绑定删除事件
     list.querySelectorAll('.comment-delete').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (!confirm('确定要删除这条评论吗？')) return;
-        
         const commentId = btn.dataset.id;
-        
-        // 判断是用户删除自己的还是管理员删除
-        const commentEl = btn.closest('.comment-item');
         const commentData = comments.find(c => c.id === commentId);
-        
-        if (commentData?.user_id === myUserId) {
-          await deleteComment(commentId);
-        } else if (isAdmin) {
-          const { adminDeleteComment } = await import('/lib/supabase.js');
-          await adminDeleteComment(commentId);
-        }
-        
+        if (commentData?.user_id === myUserId) await deleteComment(commentId);
+        else if (isAdmin) { const { adminDeleteComment } = await import('/lib/supabase.js'); await adminDeleteComment(commentId); }
         loadComments();
       });
     });
   }
-  
+
   document.getElementById('commentForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('commentBtn');
     const input = document.getElementById('commentInput');
-    
     const content = input.value.trim();
     if (!content) return;
-    
     btn.disabled = true;
     btn.textContent = '发表中...';
-    
     const { error } = await addComment(currentId, content);
-    
-    if (error) {
-      alert('评论失败：' + error.message);
-    } else {
-      input.value = '';
-      loadComments();
-    }
-    
+    if (error) alert('评论失败：' + error.message);
+    else { input.value = ''; loadComments(); }
     btn.disabled = false;
     btn.textContent = '发表评论';
   });
-  
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-  
+
+  function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
   loadChapter();
 </script>
 
 <style>
-  /* 阅读工具栏 */
   .reader-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -368,96 +244,66 @@ const chapterId = Astro.url.searchParams.get('id');
     color: var(--text-dim);
     align-items: center;
   }
-  
-  .toolbar-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .toolbar-group label {
-    color: var(--text-muted);
-    white-space: nowrap;
-  }
-  
-  .btn-group {
-    display: flex;
-    gap: 0.25rem;
-  }
-  
+  .toolbar-group { display: flex; align-items: center; gap: 0.5rem; }
+  .toolbar-group label { color: var(--text-muted); white-space: nowrap; font-size: 0.75rem; }
+  .btn-group { display: flex; gap: 0.25rem; }
   .btn-tune {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-hover);
     color: var(--text-muted);
     padding: 0.25rem 0.625rem;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 0.75rem;
     font-family: inherit;
-    transition: all 0.2s;
+    transition: all 0.25s;
   }
-  
   .btn-tune:hover {
-    border-color: var(--text-dim);
-    color: var(--text-primary);
+    border-color: var(--accent-dim);
+    color: var(--accent-light);
+    box-shadow: 0 0 8px var(--accent-glow);
   }
-  
-  .bookmark-btn {
-    font-size: 1rem;
-    padding: 0.25rem 0.5rem;
-  }
-  
+  .bookmark-btn { font-size: 1rem; padding: 0.25rem 0.5rem; }
   .bookmark-btn.active {
-    color: #ca4;
-    border-color: #ca4;
+    color: var(--accent-light);
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 10px var(--accent-glow);
   }
-  
-  /* 章节头部 */
+
   .chapter-header {
     padding: 2rem 0 3rem;
     text-align: center;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 3rem;
   }
-
   .chapter-header h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: 1.625rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 0.5rem;
   }
-
   .chapter-header .meta {
     font-size: 0.75rem;
     color: var(--text-faint);
+    letter-spacing: 0.05em;
   }
 
-  /* 正文内容 */
   .chapter-content {
     padding-bottom: 4rem;
     font-family: "Noto Serif SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
   }
-
   .chapter-content p {
     margin-bottom: 1.5rem;
     text-indent: 2em;
     line-height: 2;
   }
-  
-  /* 页宽变体 */
-  .container-narrow {
-    max-width: 520px;
-    margin: 0 auto;
-    padding: 0 2rem;
-  }
-  
-  .container-wide {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 0 2rem;
-  }
 
-  /* 章节导航 */
+  .container-narrow { max-width: 520px; margin: 0 auto; padding: 0 2rem; }
+  .container-wide { max-width: 860px; margin: 0 auto; padding: 0 2rem; }
+
   .chapter-nav {
     display: flex;
     justify-content: space-between;
@@ -467,83 +313,48 @@ const chapterId = Astro.url.searchParams.get('id');
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 3rem;
   }
-
   .chapter-nav a {
-    color: var(--text-dim);
+    color: var(--text-muted);
     text-decoration: none;
     font-size: 0.875rem;
-    transition: color 0.2s;
+    font-weight: 500;
+    transition: all 0.25s;
     padding: 0.5rem 0;
   }
+  .chapter-nav a:hover { color: var(--accent-light); text-shadow: 0 0 8px var(--accent-glow); }
+  .chapter-nav a.disabled { color: var(--text-faint); cursor: default; pointer-events: none; }
+  .chapter-nav .center { color: var(--text-faint); font-size: 0.75rem; }
 
-  .chapter-nav a:hover {
-    color: var(--text-primary);
-  }
-
-  .chapter-nav a.disabled {
-    color: var(--text-faint);
-    cursor: default;
-    pointer-events: none;
-  }
-
-  .chapter-nav .center {
-    color: var(--text-faint);
-    font-size: 0.75rem;
-  }
-
-  /* 评论区 */
-  .comments-section {
-    margin-bottom: 4rem;
-  }
-  
+  .comments-section { margin-bottom: 4rem; }
   .comments-section h3 {
     font-size: 1.125rem;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 1.5rem;
   }
-  
-  .comment-form {
-    margin-bottom: 2rem;
-  }
-  
-  .comment-form textarea {
-    margin-bottom: 0.75rem;
-  }
-  
-  .comments-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
+  .comment-form { margin-bottom: 2rem; }
+  .comment-form textarea { margin-bottom: 0.75rem; }
+  .comments-list { display: flex; flex-direction: column; gap: 0.5rem; }
   .comment-item {
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    transition: border-color 0.25s;
   }
-  
-  .comment-item:last-child {
-    border-bottom: none;
-  }
-  
+  .comment-item:hover { border-color: var(--border-hover); }
   .comment-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     margin-bottom: 0.5rem;
   }
-  
   .comment-author {
     font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-primary);
+    font-weight: 600;
+    color: var(--accent-light);
   }
-  
-  .comment-time {
-    font-size: 0.75rem;
-    color: var(--text-faint);
-  }
-  
+  .comment-time { font-size: 0.75rem; color: var(--text-faint); }
   .comment-delete {
     margin-left: auto;
     background: none;
@@ -552,13 +363,10 @@ const chapterId = Astro.url.searchParams.get('id');
     font-size: 0.75rem;
     cursor: pointer;
     padding: 0.25rem 0.5rem;
-    transition: color 0.2s;
+    transition: all 0.25s;
+    border-radius: 4px;
   }
-  
-  .comment-delete:hover {
-    color: var(--error);
-  }
-  
+  .comment-delete:hover { color: var(--error); background: var(--error-bg); }
   .comment-body {
     font-size: 0.9375rem;
     color: var(--text-secondary);
@@ -571,22 +379,12 @@ const chapterId = Astro.url.searchParams.get('id');
     font-size: 0.75rem;
     color: var(--text-faint);
     border-top: 1px solid var(--border-color);
+    letter-spacing: 0.05em;
   }
-  
+
   @media (max-width: 640px) {
-    .reader-toolbar {
-      gap: 1rem;
-      font-size: 0.75rem;
-    }
-    
-    .container-reader,
-    .container-narrow,
-    .container-wide {
-      padding: 0 1rem;
-    }
-    
-    .chapter-header h1 {
-      font-size: 1.25rem;
-    }
+    .reader-toolbar { gap: 1rem; font-size: 0.75rem; }
+    .container-reader, .container-narrow, .container-wide { padding: 0 1.25rem; }
+    .chapter-header h1 { font-size: 1.375rem; }
   }
 </style>
