@@ -1,9 +1,5 @@
 ---
-// Header 组件 - 导航栏
-// 支持两种模式：public（首页）/ private（需要登录的页面）
-// Props:
-//   mode: 'public' | 'private' - 导航模式
-//   title: string - 页面标题（显示在 logo 位置）
+// Header 组件 - 月之暗面风格
 
 interface Props {
   mode?: 'public' | 'private';
@@ -15,12 +11,15 @@ const { mode = 'private', title = '冰箱里的世界' } = Astro.props;
 
 <header class="header-container">
   <div class="header-inner">
-    <a href="/" class="logo">{title}</a>
+    <a href="/" class="logo">
+      <span class="logo-icon">◈</span>
+      <span>{title}</span>
+    </a>
     <nav class="nav">
       {mode === 'public' ? (
         <>
           <a href="/register">邀请码注册</a>
-          <a href="/login">会员登录</a>
+          <a href="/login" class="nav-highlight">会员登录</a>
         </>
       ) : (
         <>
@@ -34,7 +33,6 @@ const { mode = 'private', title = '冰箱里的世界' } = Astro.props;
 </header>
 
 <script>
-  // 退出登录逻辑
   document.querySelectorAll('[data-logout]').forEach(el => {
     el.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -49,8 +47,9 @@ const { mode = 'private', title = '冰箱里的世界' } = Astro.props;
   .header-container {
     padding: 1.5rem 0;
     border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(180deg, var(--bg-primary) 0%, rgba(3,3,8,0.95) 100%);
   }
-  
+
   .header-inner {
     max-width: 720px;
     margin: 0 auto;
@@ -59,45 +58,67 @@ const { mode = 'private', title = '冰箱里的世界' } = Astro.props;
     justify-content: space-between;
     align-items: center;
   }
-  
+
   @media (max-width: 640px) {
-    .header-inner {
-      padding: 0 1rem;
-    }
+    .header-inner { padding: 0 1.25rem; }
   }
-  
+
   .logo {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-primary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 50%, var(--cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     text-decoration: none;
-    letter-spacing: 0.05em;
-    transition: opacity 0.2s;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: opacity 0.25s;
   }
-  
-  .logo:hover {
-    opacity: 0.7;
+
+  .logo:hover { opacity: 0.8; }
+
+  .logo-icon {
+    font-size: 1rem;
+    -webkit-text-fill-color: var(--accent-light);
   }
-  
+
   .nav {
     display: flex;
     align-items: center;
     gap: 1.5rem;
   }
-  
+
   .nav a {
-    color: var(--text-dim);
+    color: var(--text-muted);
     text-decoration: none;
-    font-size: 0.875rem;
-    transition: color 0.2s;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    transition: all 0.25s;
     cursor: pointer;
     background: none;
     border: none;
     font-family: inherit;
     padding: 0;
+    letter-spacing: 0.02em;
   }
-  
+
   .nav a:hover {
-    color: var(--text-primary);
+    color: var(--accent-light);
+    text-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  .nav-highlight {
+    padding: 0.375rem 1rem !important;
+    border: 1px solid var(--accent-dim) !important;
+    border-radius: 8px !important;
+    color: var(--accent-light) !important;
+  }
+
+  .nav-highlight:hover {
+    background: var(--accent-dim) !important;
+    box-shadow: 0 0 16px var(--accent-glow) !important;
   }
 </style>
