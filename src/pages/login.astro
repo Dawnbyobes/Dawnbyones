@@ -1,188 +1,170 @@
 ---
+import Layout from '../layouts/Layout.astro';
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <title>登录 - 冰箱里的世界</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      
-      body {
-        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-        background: #0a0a0a;
-        color: #e5e5e5;
-        line-height: 1.8;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      
-      .box {
-        width: 100%;
-        max-width: 400px;
-        padding: 2rem;
-      }
-      
-      .back-link {
-        display: inline-block;
-        color: #555;
-        text-decoration: none;
-        font-size: 0.875rem;
-        margin-bottom: 3rem;
-        transition: color 0.2s;
-      }
-      
-      .back-link:hover {
-        color: #fff;
-      }
-      
-      h1 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #fff;
-        margin-bottom: 0.5rem;
-      }
-      
-      .subtitle {
-        font-size: 0.875rem;
-        color: #555;
-        margin-bottom: 2.5rem;
-      }
-      
-      input {
-        width: 100%;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        background: #111;
-        border: 1px solid #222;
-        border-radius: 6px;
-        color: #fff;
-        font-size: 0.9375rem;
-        font-family: inherit;
-        outline: none;
-        transition: border-color 0.2s;
-      }
-      
-      input::placeholder {
-        color: #444;
-      }
-      
-      input:focus {
-        border-color: #444;
-      }
-      
-      button {
-        width: 100%;
-        padding: 1rem;
-        margin-top: 0.5rem;
-        background: #fff;
-        color: #0a0a0a;
-        border: none;
-        border-radius: 6px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: opacity 0.2s;
-      }
-      
-      button:hover {
-        opacity: 0.85;
-      }
-      
-      button:disabled {
-        background: #222;
-        color: #555;
-        cursor: not-allowed;
-      }
-      
-      .links {
-        margin-top: 2rem;
-        text-align: center;
-        font-size: 0.875rem;
-      }
-      
-      .links a {
-        color: #555;
-        text-decoration: none;
-        margin: 0 0.75rem;
-        transition: color 0.2s;
-      }
-      
-      .links a:hover {
-        color: #fff;
-      }
-      
-      .message {
-        margin-top: 1.5rem;
-        font-size: 0.875rem;
-        text-align: center;
-      }
-      
-      .error { color: #c44; }
-      .success { color: #4c4; }
-    </style>
-  </head>
-  <body>
-    <div class="box">
-      <a href="/" class="back-link">← 返回首页</a>
-      <h1>会员登录</h1>
-      <p class="subtitle">欢迎回来</p>
-      
-      <form id="loginForm">
-        <input type="email" id="email" placeholder="邮箱" required />
-        <input type="password" id="password" placeholder="密码" required />
-        <button type="submit" id="submitBtn">登录</button>
-      </form>
-      <div class="message" id="message"></div>
-      
-      <div class="links">
-        <a href="/">首页</a>
-        <a href="/register">注册账号</a>
-      </div>
+<Layout title="登录 - 冰箱里的世界">
+  <div class="auth-box">
+    <a href="/" class="back-link">&larr; 返回首页</a>
+    <h1>会员登录</h1>
+    <p class="subtitle">欢迎回来</p>
+    
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="邮箱" required autocomplete="email" />
+      <input type="password" id="password" placeholder="密码" required autocomplete="current-password" />
+      <button type="submit" class="btn btn-primary" id="submitBtn">登录</button>
+    </form>
+    
+    <div class="message" id="message"></div>
+    
+    <div class="links">
+      <a href="/">首页</a>
+      <a href="/register">注册账号</a>
+      <a href="#" id="forgotLink">忘记密码</a>
     </div>
     
-    <script type="module">
-      import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-      
-      const SUPABASE_URL = 'https://cwkqlwdeteitisdrlwmg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3a3Fsd2RldGVpdGlzZHJsd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODkwMzMsImV4cCI6MjA5Njg2NTAzM30.hSbK_Z1rH9pXUwpfh2o5ZxbpkRUyy_7xDYcrmvLXgq8';
-      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-      
-      const form = document.getElementById('loginForm');
-      const msg = document.getElementById('message');
-      const btn = document.getElementById('submitBtn');
-      
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        btn.disabled = true;
-        btn.textContent = '登录中...';
-        
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        
-        try {
-          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-          
-          if (error) {
-            msg.innerHTML = `<p class="error">${error.message}</p>`;
-            btn.disabled = false;
-            btn.textContent = '登录';
-            return;
-          }
-          
-          localStorage.setItem('sb_token', data.session.access_token);
-          msg.innerHTML = '<p class="success">登录成功，正在跳转...</p>';
-          setTimeout(() => window.location.href = '/novels', 1000);
-          
-        } catch (err) {
-          msg.innerHTML = '<p class="error">网络错误，请重试</p>';
-          btn.disabled = false;
-          btn.textContent = '登录';
-        }
-      });
-    </script>
-  </body>
-</html>
+    <!-- 密码重置表单（默认隐藏） -->
+    <form id="resetForm" style="display:none; margin-top:2rem;">
+      <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1rem;">输入你的邮箱，我们将发送密码重置链接。</p>
+      <input type="email" id="resetEmail" placeholder="邮箱" required />
+      <button type="submit" class="btn btn-secondary" id="resetBtn">发送重置链接</button>
+      <button type="button" class="btn btn-secondary" id="cancelReset" style="margin-top:0.5rem;">取消</button>
+    </form>
+  </div>
+</Layout>
+
+<script type="module">
+  import { signIn, resetPassword } from '/lib/supabase.js';
+  import { showToast } from '/lib/utils.js';
+  
+  // 登录逻辑
+  const form = document.getElementById('loginForm');
+  const msg = document.getElementById('message');
+  const btn = document.getElementById('submitBtn');
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = '登录中...';
+    msg.innerHTML = '';
+    
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    
+    const { data, error } = await signIn(email, password);
+    
+    if (error) {
+      msg.innerHTML = `<p class="error">${error.message}</p>`;
+      btn.disabled = false;
+      btn.textContent = '登录';
+      return;
+    }
+    
+    localStorage.setItem('sb_token', data.session.access_token);
+    showToast('登录成功，正在跳转...');
+    setTimeout(() => window.location.href = '/novels', 800);
+  });
+  
+  // 忘记密码切换
+  const forgotLink = document.getElementById('forgotLink');
+  const resetForm = document.getElementById('resetForm');
+  const cancelReset = document.getElementById('cancelReset');
+  
+  forgotLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    form.style.display = 'none';
+    resetForm.style.display = 'block';
+    forgotLink.style.display = 'none';
+  });
+  
+  cancelReset?.addEventListener('click', () => {
+    form.style.display = 'block';
+    resetForm.style.display = 'none';
+    forgotLink.style.display = '';
+    document.getElementById('resetEmail').value = '';
+  });
+  
+  // 密码重置逻辑
+  resetForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const resetBtn = document.getElementById('resetBtn');
+    resetBtn.disabled = true;
+    resetBtn.textContent = '发送中...';
+    
+    const email = document.getElementById('resetEmail').value.trim();
+    const { error } = await resetPassword(email);
+    
+    if (error) {
+      showToast(error.message, 'error');
+      resetBtn.disabled = false;
+      resetBtn.textContent = '发送重置链接';
+      return;
+    }
+    
+    showToast('重置链接已发送到邮箱，请查收');
+    resetBtn.disabled = false;
+    resetBtn.textContent = '发送重置链接';
+    
+    // 切回登录表单
+    setTimeout(() => {
+      cancelReset.click();
+    }, 2000);
+  });
+</script>
+
+<style>
+  .auth-box {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .back-link {
+    display: inline-block;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.875rem;
+    margin-bottom: 3rem;
+    transition: color 0.2s;
+  }
+  
+  .back-link:hover {
+    color: var(--text-primary);
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+  
+  .subtitle {
+    font-size: 0.875rem;
+    color: var(--text-dim);
+    margin-bottom: 2.5rem;
+  }
+  
+  .links {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.875rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+  
+  .links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  
+  .links a:hover {
+    color: var(--text-primary);
+  }
+</style>
