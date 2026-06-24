@@ -1,0 +1,42 @@
+---
+// Layout 组件 - 页面公共骨架
+// 支持主题切换、全局样式
+
+interface Props {
+  title: string;
+  description?: string;
+  isPublic?: boolean;
+  containerClass?: string;
+}
+
+const { 
+  title, 
+  description = '冰箱里的世界 - 私密会员制阅读空间',
+  isPublic = false,
+  containerClass = 'container'
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta name="theme-color" content="#0a0a0a" />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://esm.sh" />
+    <link rel="stylesheet" href="/src/styles/global.css" />
+    <script>
+      // 初始化主题（防止闪烁）
+      const theme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
