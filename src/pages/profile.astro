@@ -1,0 +1,206 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+---
+
+<Layout title="个人中心 - 冰箱里的世界">
+  <Header />
+  
+  <main class="container">
+    <div class="profile-header">
+      <h1>个人中心</h1>
+      <p id="readerId">加载中...</p>
+    </div>
+    
+    <!-- 资料编辑 -->
+    <div class="card" style="margin-bottom:2rem;">
+      <h2>基本资料</h2>
+      <form id="profileForm">
+        <div class="form-row">
+          <label style="font-size:0.875rem; color:var(--text-muted); margin-bottom:0.5rem; display:block;">显示名称</label>
+          <input type="text" id="displayName" placeholder="你的昵称" />
+        </div>
+        <div style="margin-top:1rem;">
+          <button type="submit" class="btn btn-primary btn-small" id="saveProfileBtn">保存</button>
+        </div>
+      </form>
+      <div class="message" id="profileMessage"></div>
+    </div>
+    
+    <!-- 我的书签 -->
+    <div class="card" style="margin-bottom:2rem;">
+      <h2>我的书签</h2>
+      <div id="bookmarksList">
+        <div class="empty">加载中...</div>
+      </div>
+    </div>
+    
+    <!-- 账户操作 -->
+    <div class="card">
+      <h2>账户</h2>
+      <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+        <a href="/login" class="btn btn-secondary btn-small" style="text-decoration:none;">切换账号</a>
+        <button class="btn btn-danger btn-small" id="logoutBtn">退出登录</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="container">
+    <p>2026 冰箱里的世界 · 仅供会员阅读</p>
+  </footer>
+</Layout>
+
+<script type="module">
+  import { 
+    getSession, getProfile, updateProfile, 
+    getBookmarks, removeBookmark, signOut 
+  } from '/lib/supabase.js';
+  import { formatDate, showToast } from '/lib/utils.js';
+  
+  // 认证检查
+  const session = await getSession();
+  if (!session) {
+    window.location.href = '/login';
+  }
+  
+  // 加载用户资料
+  async function loadProfile() {
+    const profile = await getProfile();
+    if (profile) {
+      document.getElementById('readerId').textContent = `ID: ${profile.reader_id}`;
+      document.getElementById('displayName').value = profile.display_name || '';
+    }
+  }
+  
+  // 加载书签
+  async function loadBookmarks() {
+    const { data: bookmarks, error } = await getBookmarks();
+    const list = document.getElementById('bookmarksList');
+    
+    if (error || !bookmarks || bookmarks.length === 0) {
+      list.innerHTML = '<div class="empty">暂无书签</div>';
+      return;
+    }
+    
+    list.innerHTML = bookmarks.map(b => `
+      <div class="bookmark-item">
+        <div class="bookmark-info" onclick="location.href='/read?id=${b.chapter_id}'">
+          <h4>第${b.chapters?.order_num || '?'}章 · ${b.chapters?.title || '未知章节'}</h4>
+          <span>${formatDate(b.created_at)}</span>
+        </div>
+        <button class="btn-small btn-danger remove-bookmark" data-id="${b.id}">移除</button>
+      </div>
+    `).join('');
+    
+    // 绑定移除事件
+    list.querySelectorAll('.remove-bookmark').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const { error } = await removeBookmark(btn.dataset.id);
+        if (!error) {
+          showToast('书签已移除');
+          loadBookmarks();
+        }
+      });
+    });
+  }
+  
+  // 保存资料
+  document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('saveProfileBtn');
+    btn.disabled = true;
+    
+    const displayName = document.getElementById('displayName').value.trim();
+    const { error } = await updateProfile({ display_name: displayName });
+    
+    const msg = document.getElementById('profileMessage');
+    if (error) {
+      msg.innerHTML = `<p class="error">保存失败：${error.message}</p>`;
+    } else {
+      msg.innerHTML = '<p class="success">资料已更新</p>';
+      loadProfile();
+    }
+    
+    btn.disabled = false;
+  });
+  
+  // 退出登录
+  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    await signOut();
+    window.location.href = '/';
+  });
+  
+  loadProfile();
+  loadBookmarks();
+</script>
+
+<style>
+  .profile-header {
+    padding: 2rem 0;
+    text-align: center;
+  }
+  
+  .profile-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+  
+  .profile-header p {
+    font-size: 0.875rem;
+    color: var(--text-dim);
+    font-family: monospace;
+  }
+  
+  .card h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+  }
+  
+  .bookmark-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+    gap: 1rem;
+  }
+  
+  .bookmark-item:last-child {
+    border-bottom: none;
+  }
+  
+  .bookmark-info {
+    flex: 1;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  
+  .bookmark-info:hover {
+    opacity: 0.7;
+  }
+  
+  .bookmark-info h4 {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+  
+  .bookmark-info span {
+    font-size: 0.75rem;
+    color: var(--text-faint);
+  }
+  
+  footer {
+    padding: 2rem 0;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-faint);
+    border-top: 1px solid var(--border-color);
+    margin-top: 2rem;
+  }
+</style>
