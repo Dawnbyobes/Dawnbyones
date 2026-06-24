@@ -1,0 +1,103 @@
+---
+// Header 组件 - 导航栏
+// 支持两种模式：public（首页）/ private（需要登录的页面）
+// Props:
+//   mode: 'public' | 'private' - 导航模式
+//   title: string - 页面标题（显示在 logo 位置）
+
+interface Props {
+  mode?: 'public' | 'private';
+  title?: string;
+}
+
+const { mode = 'private', title = '冰箱里的世界' } = Astro.props;
+---
+
+<header class="header-container">
+  <div class="header-inner">
+    <a href="/" class="logo">{title}</a>
+    <nav class="nav">
+      {mode === 'public' ? (
+        <>
+          <a href="/register">邀请码注册</a>
+          <a href="/login">会员登录</a>
+        </>
+      ) : (
+        <>
+          <a href="/novels">目录</a>
+          <a href="/profile">个人中心</a>
+          <a href="#" data-logout>退出</a>
+        </>
+      )}
+    </nav>
+  </div>
+</header>
+
+<script>
+  // 退出登录逻辑
+  document.querySelectorAll('[data-logout]').forEach(el => {
+    el.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const { signOut } = await import('/src/lib/supabase.js');
+      await signOut();
+      window.location.href = '/';
+    });
+  });
+</script>
+
+<style>
+  .header-container {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .header-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  @media (max-width: 640px) {
+    .header-inner {
+      padding: 0 1rem;
+    }
+  }
+  
+  .logo {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s;
+  }
+  
+  .logo:hover {
+    opacity: 0.7;
+  }
+  
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  
+  .nav a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.2s;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: 0;
+  }
+  
+  .nav a:hover {
+    color: var(--text-primary);
+  }
+</style>
