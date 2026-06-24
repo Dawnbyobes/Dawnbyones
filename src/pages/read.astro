@@ -1,316 +1,592 @@
 ---
+import Layout from '../layouts/Layout.astro';
+import ReaderHeader from '../components/ReaderHeader.astro';
+
 const chapterId = Astro.url.searchParams.get('id');
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>阅读 - 冰箱里的世界</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-
-      body {
-        font-family: "Noto Serif SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
-        background: #0a0a0a;
-        color: #ccc;
-        line-height: 2;
-        font-size: 1.125rem;
-      }
-
-      .container {
-        max-width: 680px;
-        margin: 0 auto;
-        padding: 0 2rem;
-      }
-
-      header {
-        padding: 1.5rem 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: sticky;
-        top: 0;
-        background: #0a0a0a;
-        border-bottom: 1px solid #111;
-        z-index: 10;
-      }
-
-      .logo {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #fff;
-        text-decoration: none;
-        letter-spacing: 0.05em;
-      }
-
-      .nav a {
-        color: #555;
-        text-decoration: none;
-        margin-left: 1.5rem;
-        font-size: 0.875rem;
-        transition: color 0.2s;
-        cursor: pointer;
-      }
-
-      .nav a:hover { color: #fff; }
-
-      /* 阅读设置栏 */
-      .reader-settings {
-        display: flex;
-        gap: 2rem;
-        padding: 1rem 0;
-        border-bottom: 1px solid #111;
-        margin-bottom: 2rem;
-        font-family: "PingFang SC", sans-serif;
-        font-size: 0.8125rem;
-        color: #555;
-      }
-
-      .setting-group {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-      }
-
-      .setting-group label { color: #666; }
-
-      .setting-group button {
-        background: #1a1a1a;
-        border: 1px solid #333;
-        color: #888;
-        padding: 0.25rem 0.75rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.8125rem;
-        transition: all 0.2s;
-      }
-
-      .setting-group button:hover {
-        border-color: #555;
-        color: #fff;
-      }
-
-      .chapter-header {
-        padding: 2rem 0 3rem;
-        text-align: center;
-        border-bottom: 1px solid #111;
-        margin-bottom: 3rem;
-      }
-
-      .chapter-header h1 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #fff;
-        margin-bottom: 0.5rem;
-      }
-
-      .chapter-header .meta {
-        font-size: 0.75rem;
-        color: #444;
-        font-family: "PingFang SC", sans-serif;
-      }
-
-      .chapter-content {
-        padding-bottom: 4rem;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-      }
-
-      .chapter-content p {
-        margin-bottom: 1.5rem;
-        text-indent: 2em;
-      }
-
-      .chapter-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 2rem 0;
-        border-top: 1px solid #111;
-        border-bottom: 1px solid #111;
-        margin-bottom: 4rem;
-      }
-
-      .chapter-nav a {
-        color: #555;
-        text-decoration: none;
-        font-size: 0.875rem;
-        font-family: "PingFang SC", sans-serif;
-        transition: color 0.2s;
-        padding: 0.5rem 0;
-      }
-
-      .chapter-nav a:hover { color: #fff; }
-
-      .chapter-nav a.disabled {
-        color: #222;
-        cursor: default;
-        pointer-events: none;
-      }
-
-      .chapter-nav .center {
-        color: #444;
-        font-size: 0.75rem;
-      }
-
-      footer {
-        padding: 3rem 0;
-        text-align: center;
-        font-size: 0.75rem;
-        color: #222;
-        border-top: 1px solid #111;
-      }
-    </style>
-  </head>
-  <body>
-    <header class="container">
-      <a href="/" class="logo">冰箱里的世界</a>
-      <nav class="nav">
-        <a href="/novels">目录</a>
-        <a onclick="logout()">退出</a>
-      </nav>
-    </header>
-
-    <main class="container">
-      <div class="reader-settings">
-        <div class="setting-group">
-          <label>字号</label>
-          <button onclick="changeFontSize(-1)">小</button>
-          <button onclick="changeFontSize(1)">大</button>
-        </div>
-        <div class="setting-group">
-          <label>行距</label>
-          <button onclick="changeLineHeight(-0.2)">窄</button>
-          <button onclick="changeLineHeight(0.2)">宽</button>
+<Layout title="阅读 - 冰箱里的世界">
+  <ReaderHeader />
+  
+  <main class="container-reader">
+    <!-- 阅读工具栏 -->
+    <div class="reader-toolbar">
+      <div class="toolbar-group">
+        <label>字号</label>
+        <div class="btn-group">
+          <button class="btn-tune" data-font="-0.125">小</button>
+          <button class="btn-tune" data-font="+0.125">大</button>
         </div>
       </div>
-
-      <div class="chapter-header">
-        <h1 id="title">加载中</h1>
-        <div class="meta" id="meta"></div>
+      <div class="toolbar-group">
+        <label>行距</label>
+        <div class="btn-group">
+          <button class="btn-tune" data-line="-0.2">窄</button>
+          <button class="btn-tune" data-line="+0.2">宽</button>
+        </div>
       </div>
-
-      <div class="chapter-content" id="content"></div>
-
-      <div class="chapter-nav" id="chapterNav">
-        <a href="#" id="prevLink">上一章</a>
-        <span class="center" id="progress"></span>
-        <a href="#" id="nextLink">下一章</a>
+      <div class="toolbar-group">
+        <label>字体</label>
+        <div class="btn-group">
+          <button class="btn-tune" data-font-family="serif">宋体</button>
+          <button class="btn-tune" data-font-family="sans">黑体</button>
+        </div>
       </div>
-    </main>
+      <div class="toolbar-group">
+        <label>页宽</label>
+        <div class="btn-group">
+          <button class="btn-tune" data-width="narrow">窄</button>
+          <button class="btn-tune" data-width="normal">中</button>
+          <button class="btn-tune" data-width="wide">宽</button>
+        </div>
+      </div>
+      <div class="toolbar-group">
+        <button class="btn-tune bookmark-btn" id="bookmarkBtn" title="收藏本章">
+          <span id="bookmarkIcon">☆</span>
+        </button>
+      </div>
+    </div>
 
-    <footer class="container">
-      <p>2026 冰箱里的世界 · 仅供会员阅读</p>
-    </footer>
+    <div class="chapter-header">
+      <h1 id="title">加载中</h1>
+      <div class="meta" id="meta"></div>
+    </div>
 
-    <script type="module">
-      import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+    <div class="chapter-content" id="content">
+      <div class="empty">加载中...</div>
+    </div>
 
-      const SUPABASE_URL = 'https://cwkqlwdeteitisdrlwmg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3a3Fsd2RldGVpdGlzZHJsd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODkwMzMsImV4cCI6MjA5Njg2NTAzM30.hSbK_Z1rH9pXUwpfh2o5ZxbpkRUyy_7xDYcrmvLXgq8';
-      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    <!-- 章节导航 -->
+    <div class="chapter-nav" id="chapterNav">
+      <a href="#" id="prevLink">&larr; 上一章</a>
+      <span class="center" id="progress"></span>
+      <a href="#" id="nextLink">下一章 &rarr;</a>
+    </div>
 
-      const token = localStorage.getItem('sb_token');
-      if (!token) {
-        window.location.href = '/login';
+    <!-- 评论区 -->
+    <div class="comments-section" id="commentsSection">
+      <h3>评论</h3>
+      
+      <form class="comment-form" id="commentForm">
+        <textarea id="commentInput" placeholder="写下你的想法..." rows="3"></textarea>
+        <button type="submit" class="btn btn-primary btn-small" id="commentBtn">发表评论</button>
+      </form>
+      
+      <div class="comments-list" id="commentsList">
+        <div class="empty">加载中...</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="container-reader">
+    <p>2026 冰箱里的世界 · 仅供会员阅读</p>
+  </footer>
+</Layout>
+
+<script type="module">
+  import { 
+    getChapters, getChapter, getSession,
+    saveProgress, getProgress,
+    toggleBookmark, getBookmarks,
+    getComments, addComment, deleteComment,
+    deleteChapter as deleteCommentById
+  } from '/lib/supabase.js';
+  import { throttle, formatDate } from '/lib/utils.js';
+  
+  // 认证检查
+  const session = await getSession();
+  if (!session) {
+    window.location.href = '/login';
+  }
+  
+  const currentId = new URLSearchParams(window.location.search).get('id');
+  if (!currentId) {
+    window.location.href = '/novels';
+  }
+  
+  // 保存最后阅读
+  localStorage.setItem('last_read_chapter', currentId);
+  
+  // 阅读设置状态
+  let fontSize = parseFloat(localStorage.getItem('reader_font_size')) || 1.125;
+  let lineHeight = parseFloat(localStorage.getItem('reader_line_height')) || 2;
+  let fontFamily = localStorage.getItem('reader_font_family') || 'serif';
+  let pageWidth = localStorage.getItem('reader_page_width') || 'normal';
+  let allChapters = [];
+  let isBookmarked = false;
+  let myUserId = session?.user?.id;
+  let isAdmin = false;
+  
+  // 检查是否为管理员
+  try {
+    const { checkIsAdmin } = await import('/lib/supabase.js');
+    isAdmin = await checkIsAdmin();
+  } catch(e) { /* ignore */ }
+  
+  function applySettings() {
+    const content = document.getElementById('content');
+    const main = document.querySelector('main');
+    if (!content) return;
+    
+    content.style.fontSize = fontSize + 'rem';
+    content.style.lineHeight = lineHeight;
+    content.style.fontFamily = fontFamily === 'serif' 
+      ? '"Noto Serif SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif'
+      : '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif';
+    
+    // 页宽设置
+    if (main) {
+      main.classList.remove('container-reader', 'container-narrow', 'container-wide');
+      if (pageWidth === 'narrow') {
+        main.classList.add('container-narrow');
+      } else if (pageWidth === 'wide') {
+        main.classList.add('container-wide');
+      } else {
+        main.classList.add('container-reader');
       }
-
-      let readerId = localStorage.getItem('reader_id');
-      if (!readerId) {
-        readerId = '读者#' + Math.floor(1000 + Math.random() * 9000);
-        localStorage.setItem('reader_id', readerId);
-      }
-
-      const currentId = new URLSearchParams(window.location.search).get('id');
-      if (!currentId) {
-        window.location.href = '/novels';
-      }
-
-      let allChapters = [];
-
-      let fontSize = parseFloat(localStorage.getItem('reader_font_size')) || 1.125;
-      let lineHeight = parseFloat(localStorage.getItem('reader_line_height')) || 2;
-
-      function applySettings() {
-        const content = document.getElementById('content');
-        if (content) {
-          content.style.fontSize = fontSize + 'rem';
-          content.style.lineHeight = lineHeight;
-        }
-      }
-
-      window.changeFontSize = function(delta) {
-        fontSize = Math.max(0.875, Math.min(1.5, fontSize + delta * 0.125));
+    }
+  }
+  
+  // 工具栏事件
+  document.querySelectorAll('.btn-tune').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const fontDelta = parseFloat(btn.dataset.font);
+      const lineDelta = parseFloat(btn.dataset.line);
+      const fontFam = btn.dataset.fontFamily;
+      const width = btn.dataset.width;
+      
+      if (!isNaN(fontDelta)) {
+        fontSize = Math.max(0.875, Math.min(1.5, fontSize + fontDelta));
         localStorage.setItem('reader_font_size', fontSize);
-        applySettings();
-      };
-
-      window.changeLineHeight = function(delta) {
-        lineHeight = Math.max(1.5, Math.min(3, lineHeight + delta));
-        localStorage.setItem('reader_line_height', lineHeight);
-        applySettings();
-      };
-
-      async function loadChapter() {
-        localStorage.setItem('last_read_chapter', currentId);
-
-        const { data: chapters } = await supabase
-          .from('chapters')
-          .select('id, order_num, title')
-          .order('order_num', { ascending: true });
-
-        allChapters = chapters || [];
-        const currentIndex = allChapters.findIndex(c => c.id === currentId);
-
-        const { data: chapter } = await supabase
-          .from('chapters')
-          .select('*')
-          .eq('id', currentId)
-          .single();
-
-        if (!chapter) {
-          document.getElementById('title').textContent = '章节不存在';
-          return;
-        }
-
-        document.getElementById('title').textContent = `第${chapter.order_num}章 ${chapter.title}`;
-        document.getElementById('meta').textContent = new Date(chapter.created_at).toLocaleDateString('zh-CN');
-
-        const paragraphs = chapter.content.split('\n').filter(p => p.trim());
-        document.getElementById('content').innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
-
-        applySettings();
-
-        const prevLink = document.getElementById('prevLink');
-        const nextLink = document.getElementById('nextLink');
-
-        if (currentIndex > 0) {
-          prevLink.href = `/read?id=${allChapters[currentIndex - 1].id}`;
-          prevLink.classList.remove('disabled');
-        } else {
-          prevLink.classList.add('disabled');
-          prevLink.textContent = '已是第一章';
-        }
-
-        if (currentIndex < allChapters.length - 1) {
-          nextLink.href = `/read?id=${allChapters[currentIndex + 1].id}`;
-          nextLink.classList.remove('disabled');
-        } else {
-          nextLink.classList.add('disabled');
-          nextLink.textContent = '已是最后一章';
-        }
-
-        document.getElementById('progress').textContent = `${currentIndex + 1} / ${allChapters.length}`;
       }
+      if (!isNaN(lineDelta)) {
+        lineHeight = Math.max(1.5, Math.min(3, lineHeight + lineDelta));
+        localStorage.setItem('reader_line_height', lineHeight);
+      }
+      if (fontFam) {
+        fontFamily = fontFam;
+        localStorage.setItem('reader_font_family', fontFamily);
+      }
+      if (width) {
+        pageWidth = width;
+        localStorage.setItem('reader_page_width', pageWidth);
+      }
+      
+      applySettings();
+    });
+  });
+  
+  // 书签功能
+  document.getElementById('bookmarkBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('bookmarkBtn');
+    btn.disabled = true;
+    
+    const { bookmarked } = await toggleBookmark(currentId);
+    isBookmarked = bookmarked;
+    document.getElementById('bookmarkIcon').textContent = bookmarked ? '★' : '☆';
+    btn.classList.toggle('active', bookmarked);
+    
+    btn.disabled = false;
+  });
+  
+  // 加载章节内容
+  async function loadChapter() {
+    // 获取所有章节（用于导航）
+    const { data: chapters } = await getChapters();
+    allChapters = chapters || [];
+    const currentIndex = allChapters.findIndex(c => c.id === currentId);
+    
+    // 获取当前章节内容
+    const { data: chapter, error } = await getChapter(currentId);
+    
+    if (error || !chapter) {
+      document.getElementById('title').textContent = '章节不存在';
+      document.getElementById('content').innerHTML = '<div class="empty">章节不存在或已被删除</div>';
+      return;
+    }
+    
+    document.title = `第${chapter.order_num}章 ${chapter.title} - 冰箱里的世界`;
+    document.getElementById('title').textContent = `第${chapter.order_num}章 ${chapter.title}`;
+    document.getElementById('meta').textContent = formatDate(chapter.created_at);
+    
+    // 渲染内容
+    const paragraphs = chapter.content.split('\n').filter(p => p.trim());
+    document.getElementById('content').innerHTML = paragraphs.map(p => `<p>${escapeHtml(p)}</p>`).join('');
+    
+    applySettings();
+    
+    // 恢复阅读进度
+    const savedProgress = await getProgress(currentId);
+    if (savedProgress > 100) {
+      setTimeout(() => {
+        window.scrollTo({ top: savedProgress, behavior: 'smooth' });
+      }, 300);
+    }
+    
+    // 更新导航
+    const prevLink = document.getElementById('prevLink');
+    const nextLink = document.getElementById('nextLink');
+    
+    if (currentIndex > 0) {
+      prevLink.href = `/read?id=${allChapters[currentIndex - 1].id}`;
+      prevLink.classList.remove('disabled');
+      prevLink.innerHTML = '&larr; 上一章';
+    } else {
+      prevLink.classList.add('disabled');
+      prevLink.innerHTML = '已是第一章';
+      prevLink.href = '#';
+    }
+    
+    if (currentIndex < allChapters.length - 1) {
+      nextLink.href = `/read?id=${allChapters[currentIndex + 1].id}`;
+      nextLink.classList.remove('disabled');
+      nextLink.innerHTML = '下一章 &rarr;';
+    } else {
+      nextLink.classList.add('disabled');
+      nextLink.innerHTML = '已是最后一章';
+      nextLink.href = '#';
+    }
+    
+    document.getElementById('progress').textContent = `${currentIndex + 1} / ${allChapters.length}`;
+    
+    // 检查书签状态
+    const { data: bookmarks } = await getBookmarks();
+    isBookmarked = (bookmarks || []).some(b => b.chapter_id === currentId);
+    document.getElementById('bookmarkIcon').textContent = isBookmarked ? '★' : '☆';
+    document.getElementById('bookmarkBtn').classList.toggle('active', isBookmarked);
+    
+    // 加载评论
+    loadComments();
+  }
+  
+  // 保存阅读进度（节流）
+  const throttledSaveProgress = throttle(async () => {
+    if (!currentId) return;
+    const scrollY = window.scrollY;
+    if (scrollY > 100) {
+      await saveProgress(currentId, scrollY);
+    }
+  }, 5000);
+  
+  window.addEventListener('scroll', throttledSaveProgress);
+  
+  // 评论功能
+  async function loadComments() {
+    const list = document.getElementById('commentsList');
+    const { data: comments, error } = await getComments(currentId);
+    
+    if (error) {
+      list.innerHTML = '<div class="empty">评论加载失败</div>';
+      return;
+    }
+    
+    if (!comments || comments.length === 0) {
+      list.innerHTML = '<div class="empty">暂无评论，来发表第一条吧</div>';
+      return;
+    }
+    
+    list.innerHTML = comments.map(c => `
+      <div class="comment-item" data-id="${c.id}">
+        <div class="comment-header">
+          <span class="comment-author">${escapeHtml(c.reader_id)}</span>
+          <span class="comment-time">${formatDate(c.created_at)}</span>
+          ${(c.user_id === myUserId || isAdmin) ? `
+            <button class="comment-delete" data-id="${c.id}">删除</button>
+          ` : ''}
+        </div>
+        <div class="comment-body">${escapeHtml(c.content)}</div>
+      </div>
+    `).join('');
+    
+    // 绑定删除事件
+    list.querySelectorAll('.comment-delete').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm('确定要删除这条评论吗？')) return;
+        
+        const commentId = btn.dataset.id;
+        
+        // 判断是用户删除自己的还是管理员删除
+        const commentEl = btn.closest('.comment-item');
+        const commentData = comments.find(c => c.id === commentId);
+        
+        if (commentData?.user_id === myUserId) {
+          await deleteComment(commentId);
+        } else if (isAdmin) {
+          const { adminDeleteComment } = await import('/lib/supabase.js');
+          await adminDeleteComment(commentId);
+        }
+        
+        loadComments();
+      });
+    });
+  }
+  
+  document.getElementById('commentForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('commentBtn');
+    const input = document.getElementById('commentInput');
+    
+    const content = input.value.trim();
+    if (!content) return;
+    
+    btn.disabled = true;
+    btn.textContent = '发表中...';
+    
+    const { error } = await addComment(currentId, content);
+    
+    if (error) {
+      alert('评论失败：' + error.message);
+    } else {
+      input.value = '';
+      loadComments();
+    }
+    
+    btn.disabled = false;
+    btn.textContent = '发表评论';
+  });
+  
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  
+  loadChapter();
+</script>
 
-      window.logout = function() {
-        localStorage.removeItem('sb_token');
-        window.location.href = '/';
-      };
+<style>
+  /* 阅读工具栏 */
+  .reader-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    font-size: 0.8125rem;
+    color: var(--text-dim);
+    align-items: center;
+  }
+  
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .toolbar-group label {
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  
+  .btn-group {
+    display: flex;
+    gap: 0.25rem;
+  }
+  
+  .btn-tune {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-hover);
+    color: var(--text-muted);
+    padding: 0.25rem 0.625rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  
+  .btn-tune:hover {
+    border-color: var(--text-dim);
+    color: var(--text-primary);
+  }
+  
+  .bookmark-btn {
+    font-size: 1rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .bookmark-btn.active {
+    color: #ca4;
+    border-color: #ca4;
+  }
+  
+  /* 章节头部 */
+  .chapter-header {
+    padding: 2rem 0 3rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 3rem;
+  }
 
-      loadChapter();
-    </script>
-  </body>
-</html>
+  .chapter-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .chapter-header .meta {
+    font-size: 0.75rem;
+    color: var(--text-faint);
+  }
+
+  /* 正文内容 */
+  .chapter-content {
+    padding-bottom: 4rem;
+    font-family: "Noto Serif SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+  }
+
+  .chapter-content p {
+    margin-bottom: 1.5rem;
+    text-indent: 2em;
+    line-height: 2;
+  }
+  
+  /* 页宽变体 */
+  .container-narrow {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+  
+  .container-wide {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* 章节导航 */
+  .chapter-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 3rem;
+  }
+
+  .chapter-nav a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.2s;
+    padding: 0.5rem 0;
+  }
+
+  .chapter-nav a:hover {
+    color: var(--text-primary);
+  }
+
+  .chapter-nav a.disabled {
+    color: var(--text-faint);
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .chapter-nav .center {
+    color: var(--text-faint);
+    font-size: 0.75rem;
+  }
+
+  /* 评论区 */
+  .comments-section {
+    margin-bottom: 4rem;
+  }
+  
+  .comments-section h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+  }
+  
+  .comment-form {
+    margin-bottom: 2rem;
+  }
+  
+  .comment-form textarea {
+    margin-bottom: 0.75rem;
+  }
+  
+  .comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .comment-item {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .comment-item:last-child {
+    border-bottom: none;
+  }
+  
+  .comment-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .comment-author {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  
+  .comment-time {
+    font-size: 0.75rem;
+    color: var(--text-faint);
+  }
+  
+  .comment-delete {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    transition: color 0.2s;
+  }
+  
+  .comment-delete:hover {
+    color: var(--error);
+  }
+  
+  .comment-body {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  footer {
+    padding: 3rem 0;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-faint);
+    border-top: 1px solid var(--border-color);
+  }
+  
+  @media (max-width: 640px) {
+    .reader-toolbar {
+      gap: 1rem;
+      font-size: 0.75rem;
+    }
+    
+    .container-reader,
+    .container-narrow,
+    .container-wide {
+      padding: 0 1rem;
+    }
+    
+    .chapter-header h1 {
+      font-size: 1.25rem;
+    }
+  }
+</style>
