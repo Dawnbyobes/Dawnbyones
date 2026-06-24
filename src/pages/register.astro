@@ -1,168 +1,115 @@
 ---
+import Layout from '../layouts/Layout.astro';
+
 const inviteCode = Astro.url.searchParams.get('code') || '';
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <title>注册 - 冰箱里的世界</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { 
-        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-        background: #0a0a0a;
-        color: #e5e5e5;
-        line-height: 1.8;
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .box {
-        width: 100%;
-        max-width: 400px;
-        padding: 2rem;
-      }
-      .back-link {
-        display: inline-block;
-        color: #555;
-        text-decoration: none;
-        font-size: 0.875rem;
-        margin-bottom: 3rem;
-        transition: color 0.2s;
-      }
-      .back-link:hover { color: #fff; }
-      h1 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #fff;
-        margin-bottom: 0.5rem;
-      }
-      .subtitle {
-        font-size: 0.875rem;
-        color: #555;
-        margin-bottom: 2.5rem;
-      }
-      input {
-        width: 100%;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        background: #111;
-        border: 1px solid #222;
-        border-radius: 6px;
-        color: #fff;
-        font-size: 0.9375rem;
-        font-family: inherit;
-        outline: none;
-        transition: border-color 0.2s;
-      }
-      input::placeholder { color: #444; }
-      input:focus { border-color: #444; }
-      button {
-        width: 100%;
-        padding: 1rem;
-        margin-top: 0.5rem;
-        background: #fff;
-        color: #0a0a0a;
-        border: none;
-        border-radius: 6px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: opacity 0.2s;
-      }
-      button:hover { opacity: 0.85; }
-      button:disabled { background: #222; color: #555; cursor: not-allowed; }
-      .message {
-        margin-top: 1.5rem;
-        font-size: 0.875rem;
-        text-align: center;
-      }
-      .error { color: #c44; }
-      .success { color: #4c4; }
-    </style>
-  </head>
-  <body>
-    <div class="box">
-      <a href="/" class="back-link">返回首页</a>
-      <h1>会员注册</h1>
-      <p class="subtitle">输入邀请码，开启阅读之旅</p>
-      
-      <form id="registerForm">
-        <input type="text" id="inviteCode" placeholder="邀请码" value={inviteCode} required />
-        <input type="email" id="email" placeholder="邮箱" required />
-        <input type="password" id="password" placeholder="密码（至少6位）" required minlength="6" />
-        <button type="submit" id="submitBtn">注册</button>
-      </form>
-      <div class="message" id="message"></div>
-    </div>
+<Layout title="注册 - 冰箱里的世界">
+  <div class="auth-box">
+    <a href="/" class="back-link">&larr; 返回首页</a>
+    <h1>会员注册</h1>
+    <p class="subtitle">输入邀请码，开启阅读之旅</p>
     
-    <script type="module">
-      import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-      
-      const SUPABASE_URL = 'https://cwkqlwdeteitisdrlwmg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3a3Fsd2RldGVpdGlzZHJsd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODkwMzMsImV4cCI6MjA5Njg2NTAzM30.hSbK_Z1rH9pXUwpfh2o5ZxbpkRUyy_7xDYcrmvLXgq8';
-      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-      
-      const form = document.getElementById('registerForm');
-      const msg = document.getElementById('message');
-      const btn = document.getElementById('submitBtn');
-      
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        btn.disabled = true;
-        btn.textContent = '注册中...';
-        
-        const code = document.getElementById('inviteCode').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        
-        try {
-          const { data: codes, error: codeError } = await supabase
-            .from('invite_codes')
-            .select('*')
-            .eq('code', code)
-            .eq('used', false)
-            .limit(1);
-          
-          if (codeError || !codes || codes.length === 0) {
-            msg.innerHTML = '<p class="error">邀请码无效或已被使用</p>';
-            btn.disabled = false;
-            btn.textContent = '注册';
-            return;
-          }
-          
-          const { data: authData, error: authError } = await supabase.auth.signUp({
-            email,
-            password
-          });
-          
-          if (authError) {
-            msg.innerHTML = `<p class="error">${authError.message}</p>`;
-            btn.disabled = false;
-            btn.textContent = '注册';
-            return;
-          }
-          
-          // 生成匿名编号
-          const readerId = '读者#' + Math.floor(1000 + Math.random() * 9000);
-          localStorage.setItem('reader_id', readerId);
-          
-          await supabase
-            .from('invite_codes')
-            .update({ used: true, used_by: email, used_at: new Date().toISOString() })
-            .eq('id', codes[0].id);
-          
-          msg.innerHTML = '<p class="success">注册成功，正在跳转...</p>';
-          setTimeout(() => window.location.href = '/login', 1500);
-          
-        } catch (err) {
-          msg.innerHTML = '<p class="error">网络错误，请重试</p>';
-          btn.disabled = false;
-          btn.textContent = '注册';
-        }
-      });
-    </script>
-  </body>
-</html>
+    <form id="registerForm">
+      <input type="text" id="inviteCode" placeholder="邀请码" value={inviteCode} required autocomplete="off" />
+      <input type="email" id="email" placeholder="邮箱" required autocomplete="email" />
+      <input type="password" id="password" placeholder="密码（至少6位）" required minlength="6" autocomplete="new-password" />
+      <button type="submit" class="btn btn-primary" id="submitBtn">注册</button>
+    </form>
+    <div class="message" id="message"></div>
+    
+    <div class="links" style="margin-top:2rem; text-align:center; font-size:0.875rem;">
+      <a href="/login" style="color:var(--text-dim); text-decoration:none; transition:color 0.2s;">已有账号？直接登录</a>
+    </div>
+  </div>
+</Layout>
+
+<script type="module">
+  import { signUp, checkInviteCode, consumeInviteCode } from '/lib/supabase.js';
+  
+  const form = document.getElementById('registerForm');
+  const msg = document.getElementById('message');
+  const btn = document.getElementById('submitBtn');
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = '注册中...';
+    msg.innerHTML = '';
+    
+    const code = document.getElementById('inviteCode').value.trim().toUpperCase();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    
+    // 步骤1：通过 RPC 验证邀请码（不再直接查表）
+    const { valid } = await checkInviteCode(code);
+    
+    if (!valid) {
+      msg.innerHTML = '<p class="error">邀请码无效或已被使用</p>';
+      btn.disabled = false;
+      btn.textContent = '注册';
+      return;
+    }
+    
+    // 步骤2：注册账号
+    const { data: authData, error: authError } = await signUp(email, password);
+    
+    if (authError) {
+      msg.innerHTML = `<p class="error">${authError.message}</p>`;
+      btn.disabled = false;
+      btn.textContent = '注册';
+      return;
+    }
+    
+    // 步骤3：消耗邀请码（通过 RPC）
+    await consumeInviteCode(code, email);
+    
+    // 注意：profile 和 reader_id 现在由数据库 trigger 自动创建
+    // 这里只需要保存 token 并跳转
+    if (authData.session) {
+      localStorage.setItem('sb_token', authData.session.access_token);
+    }
+    
+    msg.innerHTML = '<p class="success">注册成功，正在跳转登录页...</p>';
+    setTimeout(() => window.location.href = '/login', 1500);
+  });
+</script>
+
+<style>
+  .auth-box {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .back-link {
+    display: inline-block;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.875rem;
+    margin-bottom: 3rem;
+    transition: color 0.2s;
+  }
+  
+  .back-link:hover {
+    color: var(--text-primary);
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+  
+  .subtitle {
+    font-size: 0.875rem;
+    color: var(--text-dim);
+    margin-bottom: 2.5rem;
+  }
+</style>
