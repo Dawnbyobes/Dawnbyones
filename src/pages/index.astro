@@ -1,179 +1,112 @@
 ---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+
 const title = "冰箱里的世界";
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      body {
-        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-        background: #0a0a0a;
-        color: #e5e5e5;
-        line-height: 1.8;
-        min-height: 100vh;
-      }
-      
-      .container {
-        max-width: 720px;
-        margin: 0 auto;
-        padding: 0 2rem;
-      }
-      
-      header {
-        padding: 2rem 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      
-      .logo {
-        font-size: 1rem;
-        font-weight: 500;
-        color: #fff;
-        letter-spacing: 0.05em;
-      }
-      
-      .nav a {
-        color: #888;
-        text-decoration: none;
-        margin-left: 2rem;
-        font-size: 0.875rem;
-        transition: color 0.2s;
-      }
-      
-      .nav a:hover {
-        color: #fff;
-      }
-      
-      .hero {
-        text-align: center;
-        padding: 10rem 0 6rem;
-      }
-      
-      .hero h1 {
-        font-size: 2.5rem;
-        font-weight: 600;
-        color: #fff;
-        margin-bottom: 1.5rem;
-        letter-spacing: 0.02em;
-      }
-      
-      .hero p {
-        font-size: 1rem;
-        color: #666;
-        max-width: 480px;
-        margin: 0 auto 3rem;
-      }
-      
-      .btn-primary {
-        display: inline-block;
-        padding: 1rem 3rem;
-        background: #fff;
-        color: #0a0a0a;
-        text-decoration: none;
-        border-radius: 6px;
-        font-size: 0.9375rem;
-        font-weight: 500;
-        transition: opacity 0.2s;
-      }
-      
-      .btn-primary:hover {
-        opacity: 0.85;
-      }
-      
-      .divider {
-        height: 1px;
-        background: #1a1a1a;
-        margin: 4rem 0;
-      }
-      
-      .section {
-        padding: 2rem 0 6rem;
-      }
-      
-      .section h2 {
-        font-size: 0.75rem;
-        color: #555;
-        text-transform: uppercase;
-        letter-spacing: 0.15em;
-        margin-bottom: 2rem;
-      }
-      
-      .feature {
-        padding: 1.5rem 0;
-        border-bottom: 1px solid #111;
-      }
-      
-      .feature:last-child {
-        border-bottom: none;
-      }
-      
-      .feature h3 {
-        font-size: 1.125rem;
-        color: #fff;
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-      }
-      
-      .feature p {
-        font-size: 0.875rem;
-        color: #666;
-      }
-      
-      footer {
-        padding: 3rem 0;
-        text-align: center;
-        font-size: 0.75rem;
-        color: #333;
-      }
-    </style>
-  </head>
-  <body>
-    <header class="container">
-      <span class="logo">{title}</span>
-      <nav class="nav">
-        <a href="/register">邀请码注册</a>
-      </nav>
-    </header>
+<Layout title={title}>
+  <Header mode="public" />
+  
+  <main>
+    <div class="hero container">
+      <h1>冰箱里的世界</h1>
+      <p>只有受邀者才能进入的小世界。</p>
+      <a href="/login" class="btn btn-primary">会员制登录</a>
+    </div>
     
-    <main>
-      <div class="hero container">
-        <h1>冰箱里的世界</h1>
-        <p>只有受邀者才能进入的小世界。</p>
-        <a href="/login" class="btn-primary">会员制登录</a>
-      </div>
-      
-      <div class="divider"></div>
-      
-      <div class="section container">
-        <h2>关于本站</h2>
-        <div class="feature">
-          <h3>纯粹体验</h3>
-          <p>私密阅读，只有你和故事。</p>
-        </div>
-        <div class="feature">
-          <h3>持续更新</h3>
-          <p>作者不定期更新章节，敬请期待。</p>
-        </div>
-        <div class="feature">
-          <h3>联系方式</h3>
-          <p>不可申请，仅限受邀会员。</p>
-        </div>
-      </div>
-    </main>
+    <div class="divider"></div>
     
-    <footer class="container">
-      <p>2026 {title} · 仅供会员阅读</p>
-    </footer>
-  </body>
-</html>
+    <div class="section container">
+      <h2>关于本站</h2>
+      <div class="feature">
+        <h3>纯粹体验</h3>
+        <p>私密阅读，只有你和故事。</p>
+      </div>
+      <div class="feature">
+        <h3>持续更新</h3>
+        <p>作者不定期更新章节，敬请期待。</p>
+      </div>
+      <div class="feature">
+        <h3>联系方式</h3>
+        <p>不可申请，仅限受邀会员。</p>
+      </div>
+    </div>
+  </main>
+  
+  <footer class="container">
+    <p>2026 {title} · 仅供会员阅读</p>
+  </footer>
+</Layout>
+
+<style>
+  .hero {
+    text-align: center;
+    padding: 10rem 0 6rem;
+  }
+  
+  .hero h1 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.02em;
+  }
+  
+  .hero p {
+    font-size: 1rem;
+    color: var(--text-dim);
+    max-width: 480px;
+    margin: 0 auto 3rem;
+  }
+  
+  .section {
+    padding: 2rem 0 6rem;
+  }
+  
+  .section h2 {
+    font-size: 0.75rem;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 2rem;
+  }
+  
+  .feature {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .feature:last-child {
+    border-bottom: none;
+  }
+  
+  .feature h3 {
+    font-size: 1.125rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+  
+  .feature p {
+    font-size: 0.875rem;
+    color: var(--text-dim);
+  }
+  
+  footer {
+    padding: 3rem 0;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-faint);
+  }
+  
+  @media (max-width: 640px) {
+    .hero {
+      padding: 6rem 0 4rem;
+    }
+    
+    .hero h1 {
+      font-size: 2rem;
+    }
+  }
+</style>
