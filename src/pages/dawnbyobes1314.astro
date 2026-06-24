@@ -1,392 +1,709 @@
 ---
+import Layout from '../layouts/Layout.astro';
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <title>管理后台 - 冰箱里的世界</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-
-      body {
-        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-        background: #0a0a0a;
-        color: #e5e5e5;
-        line-height: 1.8;
-        min-height: 100vh;
-      }
-
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 0 2rem;
-      }
-
-      header {
-        padding: 1.5rem 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #111;
-      }
-
-      .logo {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #fff;
-        letter-spacing: 0.05em;
-      }
-
-      .nav a {
-        color: #555;
-        text-decoration: none;
-        margin-left: 2rem;
-        font-size: 0.875rem;
-        transition: color 0.2s;
-        cursor: pointer;
-      }
-
-      .nav a:hover { color: #fff; }
-
-      .card {
-        background: #111;
-        border: 1px solid #1a1a1a;
-        border-radius: 8px;
-        padding: 2rem;
-        margin: 2rem 0;
-      }
-
-      .card h2 {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #fff;
-        margin-bottom: 1.5rem;
-      }
-
-      .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-      }
-
-      input, textarea {
-        width: 100%;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        background: #0a0a0a;
-        border: 1px solid #222;
-        border-radius: 6px;
-        color: #fff;
-        font-size: 0.9375rem;
-        font-family: inherit;
-        outline: none;
-        transition: border-color 0.2s;
-      }
-
-      input::placeholder, textarea::placeholder { color: #444; }
-      input:focus, textarea:focus { border-color: #444; }
-
-      textarea {
-        min-height: 600px;
-        resize: vertical;
-        line-height: 2;
-        font-size: 1rem;
-      }
-
-      .btn-group {
-        display: flex;
-        gap: 1rem;
-        margin-top: 0.5rem;
-      }
-
-      button {
-        padding: 0.875rem 2rem;
-        border: none;
-        border-radius: 6px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: opacity 0.2s;
-      }
-
-      .btn-primary {
-        background: #fff;
-        color: #0a0a0a;
-      }
-
-      .btn-secondary {
-        background: transparent;
-        color: #888;
-        border: 1px solid #333;
-      }
-
-      button:hover { opacity: 0.85; }
-      button:disabled { background: #222; color: #555; cursor: not-allowed; border: none; }
-
-      .message {
-        margin-top: 1.5rem;
-        font-size: 0.875rem;
-      }
-
-      .error { color: #c44; }
-      .success { color: #4c4; }
-
-      .no-access {
-        text-align: center;
-        padding: 8rem 2rem;
-      }
-
-      .no-access h2 {
-        font-size: 1.5rem;
-        color: #fff;
-        margin-bottom: 1rem;
-      }
-
-      .no-access p { color: #555; }
-
-      .chapter-list { margin-top: 1.5rem; }
-
-      .chapter-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 0;
-        border-bottom: 1px solid #1a1a1a;
-      }
-
-      .chapter-row:last-child { border-bottom: none; }
-
-      .chapter-info h4 {
-        font-size: 0.9375rem;
-        color: #fff;
-        font-weight: 500;
-      }
-
-      .chapter-info span {
-        font-size: 0.75rem;
-        color: #444;
-      }
-
-      .chapter-actions {
-        display: flex;
-        gap: 1rem;
-      }
-
-      .chapter-actions a {
-        color: #555;
-        text-decoration: none;
-        font-size: 0.875rem;
-        transition: color 0.2s;
-        cursor: pointer;
-      }
-
-      .chapter-actions a:hover { color: #fff; }
-    </style>
-  </head>
-  <body>
-    <div id="app">
-      <div class="no-access">
-        <h2>验证中</h2>
-        <p>请稍候</p>
-      </div>
+<Layout title="管理后台 - 冰箱里的世界">
+  <div id="app">
+    <div class="empty" style="padding-top:8rem;">
+      <p>验证中...</p>
     </div>
+  </div>
+</Layout>
 
-    <script type="module">
-      import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-
-      const SUPABASE_URL = 'https://cwkqlwdeteitisdrlwmg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3a3Fsd2RldGVpdGlzZHJsd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODkwMzMsImV4cCI6MjA5Njg2NTAzM30.hSbK_Z1rH9pXUwpfh2o5ZxbpkRUyy_7xDYcrmvLXgq8';
-      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-      let editingId = null;
-
-      async function checkAdmin() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          window.location.href = '/login';
-          return;
-        }
-
-        const email = session.user.email;
-
-        const { data: admin, error } = await supabase
-          .from('admins')
-          .select('*')
-          .eq('email', email)
-          .limit(1);
-
-        if (error || !admin || admin.length === 0) {
-          document.getElementById('app').innerHTML = `
-            <div class="no-access">
-              <h2>无权访问</h2>
-              <p>你没有管理员权限</p>
-              <p style="margin-top:1rem;"><a href="/" style="color:#555;">返回首页</a></p>
-            </div>
-          `;
-          return;
-        }
-
-        document.getElementById('app').innerHTML = `
-          <header class="container">
-            <span class="logo">冰箱里的世界 · 管理后台</span>
-            <nav class="nav">
-              <a href="/">返回首页</a>
-              <a onclick="logout()">退出</a>
-            </nav>
-          </header>
-
-          <div class="container">
-            <div class="card" id="createCard">
-              <h2 id="formTitle">发布新章节</h2>
-              <form id="chapterForm">
-                <div class="form-row">
-                  <input type="text" id="title" placeholder="章节标题" required />
-                  <input type="number" id="order_num" placeholder="章节序号" required min="1" />
-                </div>
-                <textarea id="content" placeholder="在这里写小说内容..."></textarea>
-                <div class="btn-group">
-                  <button type="submit" class="btn-primary" id="submitBtn">发布章节</button>
-                  <button type="button" class="btn-secondary" id="cancelBtn" style="display:none;" onclick="cancelEdit()">取消编辑</button>
-                </div>
-              </form>
-              <div class="message" id="message"></div>
-            </div>
-
-            <div class="card">
-              <h2>已发布章节</h2>
-              <div class="chapter-list" id="chapterList">加载中...</div>
-            </div>
+<script type="module">
+  import { 
+    getSession, checkIsAdmin, signOut,
+    getChapters, createChapter, updateChapter, deleteChapter,
+    adminGenerateInviteCode, adminListInviteCodes,
+    adminListUsers, adminGetStats,
+    adminCreateAnnouncement, adminUpdateAnnouncement, getAnnouncement,
+    adminDeleteComment
+  } from '/lib/supabase.js';
+  import { formatDate } from '/lib/utils.js';
+  
+  let editingChapterId = null;
+  let currentTab = 'chapters';
+  let allComments = [];
+  let announcementData = null;
+  
+  async function init() {
+    const session = await getSession();
+    if (!session) {
+      window.location.href = '/login';
+      return;
+    }
+    
+    const isAdmin = await checkIsAdmin();
+    if (!isAdmin) {
+      document.getElementById('app').innerHTML = `
+        <div class="empty" style="padding-top:8rem;">
+          <h2 style="color:var(--text-primary); margin-bottom:1rem;">无权访问</h2>
+          <p style="color:var(--text-dim);">你没有管理员权限</p>
+          <a href="/" style="color:var(--text-muted); display:block; margin-top:2rem;">返回首页</a>
+        </div>
+      `;
+      return;
+    }
+    
+    renderDashboard();
+    setupEventListeners();
+    loadTabData('chapters');
+  }
+  
+  function renderDashboard() {
+    document.getElementById('app').innerHTML = `
+      <header class="admin-header">
+        <div class="admin-header-inner">
+          <span class="logo">冰箱里的世界 · 管理后台</span>
+          <nav class="nav">
+            <a href="/">返回首页</a>
+            <a href="#" id="logoutBtn">退出</a>
+          </nav>
+        </div>
+      </header>
+      
+      <div class="admin-container">
+        <!-- 统计卡片 -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card"><span class="stat-num" id="statUsers">-</span><span class="stat-label">注册会员</span></div>
+          <div class="stat-card"><span class="stat-num" id="statChapters">-</span><span class="stat-label">章节数</span></div>
+          <div class="stat-card"><span class="stat-num" id="statComments">-</span><span class="stat-label">评论数</span></div>
+          <div class="stat-card"><span class="stat-num" id="statCodes">-</span><span class="stat-label">剩余邀请码</span></div>
+        </div>
+        
+        <!-- 标签页导航 -->
+        <div class="tab-nav">
+          <button class="tab-btn active" data-tab="chapters">章节管理</button>
+          <button class="tab-btn" data-tab="publish">发布章节</button>
+          <button class="tab-btn" data-tab="invite">邀请码</button>
+          <button class="tab-btn" data-tab="users">用户管理</button>
+          <button class="tab-btn" data-tab="comments">评论管理</button>
+          <button class="tab-btn" data-tab="notice">公告设置</button>
+        </div>
+        
+        <!-- 标签页内容 -->
+        <div class="tab-content" id="tabContent">
+          <!-- 动态加载 -->
+        </div>
+      </div>
+    `;
+    
+    // 加载统计数据
+    loadStats();
+    
+    // 标签切换
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTab = btn.dataset.tab;
+        loadTabData(currentTab);
+      });
+    });
+    
+    // 退出
+    document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await signOut();
+      window.location.href = '/';
+    });
+  }
+  
+  async function loadStats() {
+    const { data } = await adminGetStats();
+    if (data) {
+      document.getElementById('statUsers').textContent = data.total_users || 0;
+      document.getElementById('statChapters').textContent = data.total_chapters || 0;
+      document.getElementById('statComments').textContent = data.total_comments || 0;
+      document.getElementById('statCodes').textContent = data.unused_codes || 0;
+    }
+  }
+  
+  function loadTabData(tab) {
+    const content = document.getElementById('tabContent');
+    
+    switch(tab) {
+      case 'chapters':
+        renderChaptersTab(content);
+        loadChaptersList();
+        break;
+      case 'publish':
+        renderPublishTab(content);
+        break;
+      case 'invite':
+        renderInviteTab(content);
+        loadInviteCodes();
+        break;
+      case 'users':
+        renderUsersTab(content);
+        loadUsersList();
+        break;
+      case 'comments':
+        renderCommentsTab(content);
+        loadCommentsList();
+        break;
+      case 'notice':
+        renderNoticeTab(content);
+        loadNoticeData();
+        break;
+    }
+  }
+  
+  // ========== 章节列表 ==========
+  function renderChaptersTab(container) {
+    container.innerHTML = `
+      <div class="admin-card">
+        <h2>已发布章节</h2>
+        <div class="admin-list" id="chaptersList">
+          <div class="empty">加载中...</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  async function loadChaptersList() {
+    const { data: chapters, error } = await getChapters();
+    const list = document.getElementById('chaptersList');
+    
+    if (error || !chapters || chapters.length === 0) {
+      list.innerHTML = '<div class="empty">暂无章节</div>';
+      return;
+    }
+    
+    list.innerHTML = chapters.map(c => `
+      <div class="admin-row">
+        <div class="admin-info">
+          <h4>第${c.order_num}章 · ${c.title}</h4>
+          <span>${formatDate(c.created_at)}</span>
+        </div>
+        <div class="admin-actions">
+          <button class="btn-small btn-secondary" onclick="window.editChapter('${c.id}')">编辑</button>
+          <button class="btn-small btn-danger" onclick="window.deleteChapter('${c.id}')">删除</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  // ========== 发布/编辑章节 ==========
+  function renderPublishTab(container) {
+    const isEdit = !!editingChapterId;
+    container.innerHTML = `
+      <div class="admin-card">
+        <h2>${isEdit ? '编辑章节' : '发布新章节'}</h2>
+        <form id="chapterForm">
+          <div class="form-row">
+            <input type="text" id="title" placeholder="章节标题" required />
+            <input type="number" id="order_num" placeholder="章节序号" required min="1" />
           </div>
-        `;
-
-        document.getElementById('chapterForm').addEventListener('submit', handleSubmit);
-        loadChapters();
+          <textarea id="content" placeholder="在这里写小说内容..." rows="20"></textarea>
+          <div class="btn-group">
+            <button type="submit" class="btn btn-primary" id="submitBtn">${isEdit ? '更新章节' : '发布章节'}</button>
+            ${isEdit ? '<button type="button" class="btn btn-secondary" id="cancelEdit">取消编辑</button>' : ''}
+          </div>
+        </form>
+        <div class="message" id="formMessage"></div>
+      </div>
+    `;
+    
+    // 如果是编辑模式，填充数据
+    if (isEdit) {
+      fillEditForm();
+    }
+    
+    setupChapterForm();
+  }
+  
+  async function fillEditForm() {
+    const { getChapter } = await import('/lib/supabase.js');
+    const { data: chapter } = await getChapter(editingChapterId);
+    if (chapter) {
+      document.getElementById('title').value = chapter.title;
+      document.getElementById('order_num').value = chapter.order_num;
+      document.getElementById('content').value = chapter.content;
+    }
+  }
+  
+  function setupChapterForm() {
+    document.getElementById('chapterForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      
+      const title = document.getElementById('title').value.trim();
+      const orderNum = parseInt(document.getElementById('order_num').value);
+      const content = document.getElementById('content').value.trim();
+      
+      let result;
+      if (editingChapterId) {
+        result = await updateChapter(editingChapterId, { title, order_num: orderNum, content });
+      } else {
+        result = await createChapter(title, orderNum, content);
       }
-
-      async function handleSubmit(e) {
-        e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-
-        const title = document.getElementById('title').value.trim();
-        const order_num = parseInt(document.getElementById('order_num').value);
-        const content = document.getElementById('content').value.trim();
-
-        let error;
-
-        if (editingId) {
-          ({ error } = await supabase
-            .from('chapters')
-            .update({ title, order_num, content })
-            .eq('id', editingId));
-          btn.textContent = '更新中...';
-        } else {
-          ({ error } = await supabase
-            .from('chapters')
-            .insert([{ title, order_num, content }]));
-          btn.textContent = '发布中...';
-        }
-
-        const msg = document.getElementById('message');
-        if (error) {
-          msg.innerHTML = '<p class="error">失败：' + error.message + '</p>';
-        } else {
-          msg.innerHTML = '<p class="success">' + (editingId ? '更新成功' : '发布成功') + '</p>';
-          document.getElementById('chapterForm').reset();
-          cancelEdit();
-          loadChapters();
-        }
-
-        btn.disabled = false;
-        btn.textContent = editingId ? '更新章节' : '发布章节';
-      }
-
-      window.editChapter = async function(id) {
-        const { data: chapter, error } = await supabase
-          .from('chapters')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (error || !chapter) {
-          alert('加载失败');
-          return;
-        }
-
-        editingId = id;
-        document.getElementById('title').value = chapter.title;
-        document.getElementById('order_num').value = chapter.order_num;
-        document.getElementById('content').value = chapter.content;
-        document.getElementById('formTitle').textContent = '编辑章节';
-        document.getElementById('submitBtn').textContent = '更新章节';
-        document.getElementById('cancelBtn').style.display = 'inline-block';
-        document.getElementById('createCard').scrollIntoView({ behavior: 'smooth' });
-      };
-
-      window.cancelEdit = function() {
-        editingId = null;
+      
+      const msg = document.getElementById('formMessage');
+      if (result.error) {
+        msg.innerHTML = `<p class="error">失败：${result.error.message}</p>`;
+      } else {
+        msg.innerHTML = `<p class="success">${editingChapterId ? '更新' : '发布'}成功</p>`;
         document.getElementById('chapterForm').reset();
-        document.getElementById('formTitle').textContent = '发布新章节';
-        document.getElementById('submitBtn').textContent = '发布章节';
-        document.getElementById('cancelBtn').style.display = 'none';
-        document.getElementById('message').innerHTML = '';
-      };
-
-      window.deleteChapter = async function(id) {
-        if (!confirm('确定要删除这个章节吗？')) return;
-
-        const { error } = await supabase
-          .from('chapters')
-          .delete()
-          .eq('id', id);
-
-        if (error) {
-          alert('删除失败：' + error.message);
-          return;
-        }
-
-        loadChapters();
-      };
-
-      async function loadChapters() {
-        const { data: chapters, error } = await supabase
-          .from('chapters')
-          .select('*')
-          .order('order_num', { ascending: true });
-
-        const list = document.getElementById('chapterList');
-        if (error) {
-          list.innerHTML = '<p class="error">加载失败</p>';
-          return;
-        }
-
-        if (!chapters || chapters.length === 0) {
-          list.innerHTML = '<p style="color:#444;">暂无章节</p>';
-          return;
-        }
-
-        list.innerHTML = chapters.map(c => `
-          <div class="chapter-row">
-            <div class="chapter-info">
-              <h4>第${c.order_num}章 · ${c.title}</h4>
-              <span>${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
-            </div>
-            <div class="chapter-actions">
-              <a onclick="editChapter('${c.id}')">编辑</a>
-              <a onclick="deleteChapter('${c.id}')" style="color:#444;">删除</a>
-            </div>
-          </div>
-        `).join('');
+        editingChapterId = null;
+        setTimeout(() => {
+          document.querySelector('[data-tab="chapters"]').click();
+          loadStats();
+        }, 800);
       }
+      
+      btn.disabled = false;
+    });
+    
+    document.getElementById('cancelEdit')?.addEventListener('click', () => {
+      editingChapterId = null;
+      loadTabData('publish');
+    });
+  }
+  
+  window.editChapter = async (id) => {
+    editingChapterId = id;
+    document.querySelector('[data-tab="publish"]').click();
+  };
+  
+  window.deleteChapter = async (id) => {
+    if (!confirm('确定要删除这个章节吗？')) return;
+    const { error } = await deleteChapter(id);
+    if (error) {
+      alert('删除失败：' + error.message);
+    } else {
+      loadChaptersList();
+      loadStats();
+    }
+  };
+  
+  // ========== 邀请码管理 ==========
+  function renderInviteTab(container) {
+    container.innerHTML = `
+      <div class="admin-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+          <h2>邀请码管理</h2>
+          <button class="btn btn-primary btn-small" id="generateCodeBtn">生成新邀请码</button>
+        </div>
+        <div class="admin-list" id="inviteList">
+          <div class="empty">加载中...</div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('generateCodeBtn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('generateCodeBtn');
+      btn.disabled = true;
+      const { data, error } = await adminGenerateInviteCode();
+      if (error) {
+        alert('生成失败：' + error.message);
+      } else {
+        alert('新邀请码：' + data);
+        loadInviteCodes();
+        loadStats();
+      }
+      btn.disabled = false;
+    });
+  }
+  
+  async function loadInviteCodes() {
+    const { data, error } = await adminListInviteCodes();
+    const list = document.getElementById('inviteList');
+    
+    if (error || !data || data.length === 0) {
+      list.innerHTML = '<div class="empty">暂无邀请码</div>';
+      return;
+    }
+    
+    list.innerHTML = data.map(c => `
+      <div class="admin-row">
+        <div class="admin-info">
+          <h4 style="font-family:monospace; letter-spacing:0.1em;">${c.code}</h4>
+          <span>${c.used ? `已使用 · ${c.used_by || '未知'} · ${formatDate(c.used_at)}` : '未使用'} · 创建于 ${formatDate(c.created_at)}</span>
+        </div>
+        <span class="badge ${c.used ? 'badge-used' : 'badge-unused'}">${c.used ? '已用' : '可用'}</span>
+      </div>
+    `).join('');
+  }
+  
+  // ========== 用户管理 ==========
+  function renderUsersTab(container) {
+    container.innerHTML = `
+      <div class="admin-card">
+        <h2>用户列表</h2>
+        <div class="admin-list" id="usersList">
+          <div class="empty">加载中...</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  async function loadUsersList() {
+    const { data, error } = await adminListUsers();
+    const list = document.getElementById('usersList');
+    
+    if (error || !data || data.length === 0) {
+      list.innerHTML = '<div class="empty">暂无用户</div>';
+      return;
+    }
+    
+    list.innerHTML = data.map(u => `
+      <div class="admin-row">
+        <div class="admin-info">
+          <h4>${escapeHtml(u.display_name || u.reader_id || '匿名')}</h4>
+          <span>${u.email || ''} · 注册于 ${formatDate(u.created_at)}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  // ========== 评论管理 ==========
+  function renderCommentsTab(container) {
+    container.innerHTML = `
+      <div class="admin-card">
+        <h2>评论管理</h2>
+        <div class="admin-list" id="commentsList">
+          <div class="empty">加载中...</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  async function loadCommentsList() {
+    // 获取所有评论（需要获取所有章节的评论）
+    const { data: chapters } = await getChapters();
+    const allComments = [];
+    
+    for (const chapter of (chapters || [])) {
+      const { getComments } = await import('/lib/supabase.js');
+      const { data } = await getComments(chapter.id);
+      if (data) {
+        data.forEach(c => allComments.push({ ...c, chapter_title: chapter.title, chapter_order: chapter.order_num }));
+      }
+    }
+    
+    const list = document.getElementById('commentsList');
+    
+    if (allComments.length === 0) {
+      list.innerHTML = '<div class="empty">暂无评论</div>';
+      return;
+    }
+    
+    allComments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    list.innerHTML = allComments.map(c => `
+      <div class="admin-row">
+        <div class="admin-info">
+          <h4>${escapeHtml(c.reader_id)} · 第${c.chapter_order}章</h4>
+          <span>${escapeHtml(c.content.substring(0, 100))}${c.content.length > 100 ? '...' : ''}</span>
+          <span style="display:block; margin-top:0.25rem; color:var(--text-faint);">${formatDate(c.created_at)}</span>
+        </div>
+        <button class="btn-small btn-danger" onclick="window.deleteComment('${c.id}')">删除</button>
+      </div>
+    `).join('');
+  }
+  
+  window.deleteComment = async (commentId) => {
+    if (!confirm('确定要删除这条评论吗？')) return;
+    const { error } = await adminDeleteComment(commentId);
+    if (error) {
+      alert('删除失败：' + error.message);
+    } else {
+      loadCommentsList();
+      loadStats();
+    }
+  };
+  
+  // ========== 公告设置 ==========
+  function renderNoticeTab(container) {
+    container.innerHTML = `
+      <div class="admin-card">
+        <h2>公告设置</h2>
+        <form id="noticeForm">
+          <textarea id="noticeContent" placeholder="输入公告内容..." rows="4" style="min-height:auto;"></textarea>
+          <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:var(--text-muted); font-size:0.875rem;">
+              <input type="checkbox" id="noticeActive" checked />
+              显示公告
+            </label>
+          </div>
+          <div class="btn-group">
+            <button type="submit" class="btn btn-primary" id="saveNoticeBtn">保存公告</button>
+            <button type="button" class="btn btn-secondary" id="newNoticeBtn">创建新公告</button>
+          </div>
+        </form>
+        <div class="message" id="noticeMessage"></div>
+      </div>
+    `;
+    
+    document.getElementById('noticeForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('saveNoticeBtn');
+      btn.disabled = true;
+      
+      const content = document.getElementById('noticeContent').value.trim();
+      const active = document.getElementById('noticeActive').checked;
+      
+      if (!content) {
+        document.getElementById('noticeMessage').innerHTML = '<p class="error">公告内容不能为空</p>';
+        btn.disabled = false;
+        return;
+      }
+      
+      let result;
+      if (announcementData?.id) {
+        result = await adminUpdateAnnouncement(announcementData.id, content, active);
+      } else {
+        result = await adminCreateAnnouncement(content);
+      }
+      
+      const msg = document.getElementById('noticeMessage');
+      if (result.error) {
+        msg.innerHTML = `<p class="error">保存失败：${result.error.message}</p>`;
+      } else {
+        msg.innerHTML = '<p class="success">公告保存成功</p>';
+        loadNoticeData();
+        loadStats();
+      }
+      
+      btn.disabled = false;
+    });
+    
+    document.getElementById('newNoticeBtn')?.addEventListener('click', () => {
+      announcementData = null;
+      document.getElementById('noticeContent').value = '';
+      document.getElementById('noticeActive').checked = true;
+      document.getElementById('noticeMessage').innerHTML = '';
+    });
+  }
+  
+  async function loadNoticeData() {
+    const content = await getAnnouncement();
+    announcementData = { id: 'existing', content };
+    document.getElementById('noticeContent').value = content;
+  }
+  
+  function setupEventListeners() {
+    // 全局事件委托
+  }
+  
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  
+  init();
+</script>
 
-      window.logout = function() {
-        localStorage.removeItem('sb_token');
-        supabase.auth.signOut();
-        window.location.href = '/';
-      };
-
-      checkAdmin();
-    </script>
-  </body>
-</html>
+<style>
+  .admin-header {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .admin-header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .admin-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  @media (max-width: 640px) {
+    .admin-container,
+    .admin-header-inner {
+      padding: 1rem;
+    }
+  }
+  
+  .logo {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: 0.05em;
+  }
+  
+  .nav {
+    display: flex;
+    gap: 1.5rem;
+  }
+  
+  .nav a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.2s;
+  }
+  
+  .nav a:hover {
+    color: var(--text-primary);
+  }
+  
+  /* 统计卡片 */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  @media (max-width: 640px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .stat-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  
+  .stat-num {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  
+  /* 标签页 */
+  .tab-nav {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+  }
+  
+  .tab-btn {
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.875rem;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  
+  .tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+  }
+  
+  .tab-btn.active {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+    font-weight: 500;
+  }
+  
+  /* 管理卡片 */
+  .admin-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+  }
+  
+  .admin-card h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+  }
+  
+  /* 列表 */
+  .admin-list {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .admin-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+    gap: 1rem;
+  }
+  
+  .admin-row:last-child {
+    border-bottom: none;
+  }
+  
+  .admin-info {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .admin-info h4 {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    word-break: break-all;
+  }
+  
+  .admin-info span {
+    font-size: 0.75rem;
+    color: var(--text-faint);
+  }
+  
+  .admin-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  
+  /* 徽章 */
+  .badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  
+  .badge-unused {
+    background: #1a3a2a;
+    color: #6c9;
+  }
+  
+  .badge-used {
+    background: #1a1a1a;
+    color: var(--text-faint);
+  }
+  
+  /* 表单 */
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  
+  @media (max-width: 640px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
