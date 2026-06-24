@@ -5,111 +5,129 @@ const inviteCode = Astro.url.searchParams.get('code') || '';
 ---
 
 <Layout title="注册 - 冰箱里的世界">
-  <div class="auth-box">
-    <a href="/" class="back-link">&larr; 返回首页</a>
-    <h1>会员注册</h1>
-    <p class="subtitle">输入邀请码，开启阅读之旅</p>
-    
-    <form id="registerForm">
-      <input type="text" id="inviteCode" placeholder="邀请码" value={inviteCode} required autocomplete="off" />
-      <input type="email" id="email" placeholder="邮箱" required autocomplete="email" />
-      <input type="password" id="password" placeholder="密码（至少6位）" required minlength="6" autocomplete="new-password" />
-      <button type="submit" class="btn btn-primary" id="submitBtn">注册</button>
-    </form>
-    <div class="message" id="message"></div>
-    
-    <div class="links" style="margin-top:2rem; text-align:center; font-size:0.875rem;">
-      <a href="/login" style="color:var(--text-dim); text-decoration:none; transition:color 0.2s;">已有账号？直接登录</a>
+  <div class="auth-page">
+    <div class="auth-glow"></div>
+    <div class="auth-box">
+      <a href="/" class="back-link">&larr; 返回首页</a>
+      <h1>会员注册</h1>
+      <p class="subtitle">输入邀请码，开启阅读之旅</p>
+
+      <form id="registerForm">
+        <input type="text" id="inviteCode" placeholder="邀请码" value={inviteCode} required autocomplete="off" />
+        <input type="email" id="email" placeholder="邮箱" required autocomplete="email" />
+        <input type="password" id="password" placeholder="密码（至少6位）" required minlength="6" autocomplete="new-password" />
+        <button type="submit" class="btn btn-primary" id="submitBtn">注册</button>
+      </form>
+      <div class="message" id="message"></div>
+
+      <div class="links">
+        <a href="/login">已有账号？直接登录</a>
+      </div>
     </div>
   </div>
 </Layout>
 
 <script type="module">
   import { signUp, checkInviteCode, consumeInviteCode } from '/lib/supabase.js';
-  
+
   const form = document.getElementById('registerForm');
   const msg = document.getElementById('message');
   const btn = document.getElementById('submitBtn');
-  
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     btn.disabled = true;
     btn.textContent = '注册中...';
     msg.innerHTML = '';
-    
+
     const code = document.getElementById('inviteCode').value.trim().toUpperCase();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    
-    // 步骤1：通过 RPC 验证邀请码（不再直接查表）
+
     const { valid } = await checkInviteCode(code);
-    
     if (!valid) {
       msg.innerHTML = '<p class="error">邀请码无效或已被使用</p>';
       btn.disabled = false;
       btn.textContent = '注册';
       return;
     }
-    
-    // 步骤2：注册账号
+
     const { data: authData, error: authError } = await signUp(email, password);
-    
     if (authError) {
       msg.innerHTML = `<p class="error">${authError.message}</p>`;
       btn.disabled = false;
       btn.textContent = '注册';
       return;
     }
-    
-    // 步骤3：消耗邀请码（通过 RPC）
+
     await consumeInviteCode(code, email);
-    
-    // 注意：profile 和 reader_id 现在由数据库 trigger 自动创建
-    // 这里只需要保存 token 并跳转
-    if (authData.session) {
-      localStorage.setItem('sb_token', authData.session.access_token);
-    }
-    
+    if (authData.session) localStorage.setItem('sb_token', authData.session.access_token);
     msg.innerHTML = '<p class="success">注册成功，正在跳转登录页...</p>';
     setTimeout(() => window.location.href = '/login', 1500);
   });
 </script>
 
 <style>
+  .auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .auth-glow {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, rgba(6, 182, 212, 0.04) 40%, transparent 65%);
+    pointer-events: none;
+  }
   .auth-box {
     width: 100%;
     max-width: 400px;
     padding: 2rem;
-    margin: 0 auto;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    position: relative;
+    z-index: 1;
   }
-  
   .back-link {
     display: inline-block;
     color: var(--text-dim);
     text-decoration: none;
     font-size: 0.875rem;
     margin-bottom: 3rem;
-    transition: color 0.2s;
+    transition: all 0.25s;
   }
-  
   .back-link:hover {
-    color: var(--text-primary);
+    color: var(--accent-light);
+    text-shadow: 0 0 8px var(--accent-glow);
   }
-  
   h1 {
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.5rem;
   }
-  
   .subtitle {
     font-size: 0.875rem;
-    color: var(--text-dim);
+    color: var(--text-muted);
     margin-bottom: 2.5rem;
+  }
+  input { margin-bottom: 0.875rem; }
+  .links {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.8125rem;
+  }
+  .links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: all 0.25s;
+  }
+  .links a:hover {
+    color: var(--accent-light);
+    text-shadow: 0 0 8px var(--accent-glow);
   }
 </style>
