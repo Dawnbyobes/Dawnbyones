@@ -105,7 +105,7 @@ export default function Login() {
       return;
     }
 
-    console.log("[Register] 注册成功, userId:", signUpData.user.id);
+    console.log("[Register] auth 注册成功, userId:", signUpData.user.id);
 
     // 3. 标记邀请码已使用
     const { error: updateCodeErr } = await supabase
@@ -120,29 +120,47 @@ export default function Login() {
       return;
     }
 
-    // 4. 创建读者 profile（只插入数据库存在的列）
+    // 4. 创建读者 profile — 用 upsert 避免主键冲突
     const readerId = generateReaderId();
-    const profileData = {
+    const profilePayload: any = {
       id: signUpData.user.id,
       reader_id: readerId,
       display_name: readerId,
-      created_at: new Date().toISOString(),
     };
 
-    console.log("[Register] 准备插入 profile:", profileData);
-
-    const { error: profileErr } = await supabase
+    // 先尝试查一下 profiles 表里有没有这个用户的记录
+    const { data: existingProfile } = await supabase
       .from("profiles")
-      .insert(profileData);
+      .select("id")
+      .eq("id", signUpData.user.id)
+      .single();
 
-    if (profileErr) {
-      console.error("[Register] 创建 profile 失败:", profileErr);
-      setError("读者信息创建失败: " + profileErr.message);
+    console.log("[Register] 已有 profile?", existingProfile);
+
+    let profileResult;
+    if (existingProfile) {
+      // 已存在，更新
+      profileResult = await supabase
+        .from("profiles")
+        .update({ reader_id: readerId, display_name: readerId })
+        .eq("id", signUpData.user.id);
+    } else {
+      // 不存在，插入（只包含最基本的字段）
+      profileResult = await supabase
+        .from("profiles")
+        .insert(profilePayload);
+    }
+
+    console.log("[Register] profile 操作结果:", profileResult);
+
+    if (profileResult.error) {
+      console.error("[Register] profile 操作失败:", profileResult.error);
+      setError("读者信息保存失败: " + profileResult.error.message);
       setLoading(false);
       return;
     }
 
-    console.log("[Register] profile 创建成功");
+    console.log("[Register] profile 保存成功");
     setSuccess("注册成功！正在跳转...");
     setTimeout(() => goDashboard(), 1000);
     setLoading(false);
