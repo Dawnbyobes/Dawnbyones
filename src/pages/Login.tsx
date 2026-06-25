@@ -71,7 +71,7 @@ export default function Login() {
               <p className="text-[#888] text-sm text-center mb-6">请输入你的邀请码以继续</p>
               <div className="space-y-3">
                 <input type="text" value={inviteCode} onChange={(e) => { setInviteCode(e.target.value); setError(""); }}
-                  placeholder="XXXX-XXXX-XXXX"
+                  placeholder="如：INVC45D2070"
                   className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-4 py-2.5 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444] transition-colors" />
                 {error && <p className="text-[#c44444] text-xs">{error}</p>}
                 {success && <p className="text-[#4caa4c] text-xs">{success}</p>}
