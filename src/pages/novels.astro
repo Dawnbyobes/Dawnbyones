@@ -7,58 +7,27 @@ import Header from '../components/Header.astro';
   <Header />
 
   <main class="container">
-    <!-- 公告栏 -->
-    <div class="notice animate-fade-in-up" id="notice">
-      <div class="notice-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="16" x2="12" y2="12"/>
-          <line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
-      </div>
-      <div class="notice-body">
-        <span class="notice-label">公告</span>
-        <span class="notice-content" id="noticeContent">加载中...</span>
-      </div>
+    <div class="notice" id="notice">
+      <span class="notice-label">公告</span>
+      <span id="noticeContent">加载中...</span>
     </div>
 
-    <!-- 页面标题 -->
-    <div class="hero animate-fade-in-up stagger-1">
+    <div class="page-header">
       <h1>目录</h1>
-      <p>会员专属阅读区</p>
       <div class="last-read" id="lastRead"></div>
     </div>
 
-    <!-- 搜索栏 -->
-    <div class="search-bar animate-fade-in-up stagger-2">
-      <div class="search-input-wrapper">
-        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input type="text" id="searchInput" placeholder="搜索章节标题或编号..." autocomplete="off" />
-      </div>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="搜索章节..." autocomplete="off" />
       <span class="search-count" id="searchCount"></span>
     </div>
 
-    <!-- 章节列表 -->
-    <div class="chapter-list animate-fade-in-up stagger-3" id="chapterList">
-      <div class="skeleton-list">
-        {Array.from({ length: 5 }).map(() => (
-          <div class="skeleton-item">
-            <div class="skeleton-num"></div>
-            <div class="skeleton-text">
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line short"></div>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div class="chapter-list" id="chapterList">
+      <div class="loading">加载中...</div>
     </div>
   </main>
 
-  <footer class="container">
-    <div class="footer-line"></div>
+  <footer class="container site-footer">
     <p>2026 冰箱里的世界 · 仅供会员阅读</p>
   </footer>
 </Layout>
@@ -85,13 +54,8 @@ import Header from '../components/Header.astro';
     if (lastChapterId) {
       const lastChapter = allChapters.find(c => c.id === lastChapterId);
       if (lastChapter) {
-        document.getElementById('lastRead').innerHTML = `
-          <a href="/read?id=${lastChapterId}" class="last-read-link">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-            继续阅读：第${lastChapter.order_num}章 ${lastChapter.title}
-          </a>`;
+        document.getElementById('lastRead').innerHTML =
+          `<a href="/read?id=${lastChapterId}" class="continue-link">继续阅读：第${lastChapter.order_num}章 ${lastChapter.title}</a>`;
       }
     }
     renderChapters(allChapters);
@@ -101,24 +65,19 @@ import Header from '../components/Header.astro';
     const list = document.getElementById('chapterList');
     const countEl = document.getElementById('searchCount');
     if (!chapters || chapters.length === 0) { list.innerHTML = '<div class="empty">暂无章节</div>'; countEl.textContent = ''; return; }
-    countEl.textContent = keyword ? `找到 ${chapters.length} 个结果` : `共 ${chapters.length} 章`;
-    list.innerHTML = chapters.map((c, i) => {
+    countEl.textContent = keyword ? `${chapters.length} 个结果` : `共 ${chapters.length} 章`;
+    list.innerHTML = chapters.map(c => {
       const isBookmarked = bookmarksMap.has(c.id);
       const titleHtml = keyword ? highlightText(c.title, keyword) : c.title;
       return `
-        <div class="chapter-item" onclick="location.href='/read?id=${c.id}'" style="animation-delay: ${i * 0.03}s">
-          <div class="chapter-main">
-            <div class="chapter-num">${c.order_num}</div>
-            <div class="chapter-info">
-              <h3>${titleHtml}</h3>
-              <div class="meta">${new Date(c.created_at).toLocaleDateString('zh-CN')}</div>
-            </div>
+        <div class="chapter-item" onclick="location.href='/read?id=${c.id}'">
+          <div class="chapter-info">
+            <span class="chapter-num">${c.order_num}</span>
+            <span class="chapter-title">${titleHtml}</span>
           </div>
-          <div class="chapter-actions">
-            ${isBookmarked ? '<span class="bookmark-badge" title="已收藏">★</span>' : ''}
-            <svg class="chapter-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
+          <div class="chapter-meta">
+            ${isBookmarked ? '<span class="bookmarked">已收藏</span>' : ''}
+            <span class="chapter-date">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
           </div>
         </div>
       `;
@@ -137,281 +96,102 @@ import Header from '../components/Header.astro';
 </script>
 
 <style>
-  /* 公告 */
   .notice {
-    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
-    border: 1.5px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem 1.5rem;
-    margin: 2rem 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    transition: all 0.3s ease;
+    margin: 24px 0;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
   }
-
-  .notice:hover {
-    border-color: var(--border-hover);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  }
-
-  .notice-icon {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--accent-pale);
-    border-radius: 10px;
-    color: var(--accent-light);
-    flex-shrink: 0;
-  }
-
-  .notice-body {
-    flex: 1;
-    min-width: 0;
-  }
-
   .notice-label {
-    display: block;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    color: var(--accent-light);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin-bottom: 0.375rem;
-  }
-
-  .notice-content {
-    font-size: 0.9375rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-  }
-
-  /* Hero */
-  .hero { padding: 2rem 0 1.5rem; }
-  .hero h1 {
-    font-size: 1.875rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-light) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.5rem;
-    letter-spacing: -0.02em;
-  }
-  .hero p { font-size: 0.875rem; color: var(--text-muted); letter-spacing: 0.02em; }
-
-  .last-read { margin-top: 1.5rem; }
-
-  .last-read-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.625rem;
-    padding: 0.75rem 1.25rem;
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(91, 33, 182, 0.05) 100%);
-    border: 1.5px solid rgba(124, 58, 237, 0.15);
-    border-radius: var(--radius);
-    color: var(--accent-light);
-    text-decoration: none;
-    font-size: 0.875rem;
+    font-size: 11px;
     font-weight: 500;
-    transition: all 0.3s ease;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-right: 12px;
   }
+  #noticeContent { color: var(--text-secondary); }
 
-  .last-read-link:hover {
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(91, 33, 182, 0.08) 100%);
-    border-color: rgba(124, 58, 237, 0.25);
-    box-shadow: 0 4px 16px var(--accent-glow);
-    transform: translateY(-1px);
+  .page-header {
+    padding: 16px 0 12px;
   }
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .last-read { margin-top: 12px; }
+  .continue-link {
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .continue-link:hover { text-decoration: underline; }
 
-  /* 搜索栏 */
-  .search-bar { margin: 1.5rem 0; position: relative; }
-
-  .search-input-wrapper {
+  .search-bar {
+    margin: 12px 0 20px;
     position: relative;
   }
-
-  .search-icon {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-dim);
-    pointer-events: none;
-    transition: color 0.3s ease;
-  }
-
-  .search-input-wrapper:focus-within .search-icon {
-    color: var(--accent-light);
-  }
-
-  .search-bar input {
-    padding-left: 2.75rem;
-    padding-right: 6rem;
-  }
-
+  .search-bar input { padding-right: 80px; }
   .search-count {
     position: absolute;
-    right: 1rem;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 0.75rem;
-    color: var(--text-faint);
-    pointer-events: none;
-    letter-spacing: 0.02em;
+    font-size: 12px;
+    color: var(--text-dim);
   }
 
-  /* 骨架屏 */
-  .skeleton-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  .chapter-list { padding-bottom: 40px; }
+  .loading {
+    padding: 40px 0;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 13px;
   }
-
-  .skeleton-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.25rem;
-    border-radius: var(--radius);
-    background: var(--bg-card);
-    border: 1.5px solid var(--border-color);
-  }
-
-  .skeleton-num {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--accent-dim), var(--accent));
-    opacity: 0.3;
-    animation: shimmer 1.5s infinite;
-    background-size: 200% 100%;
-  }
-
-  .skeleton-text {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .skeleton-line {
-    height: 14px;
-    border-radius: 6px;
-    background: var(--bg-tertiary);
-    animation: shimmer 1.5s infinite;
-    background-size: 200% 100%;
-  }
-
-  .skeleton-line.short {
-    width: 40%;
-  }
-
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-
-  /* 章节列表 */
-  .chapter-list { padding-bottom: 4rem; }
-
   .chapter-item {
-    padding: 1rem 1.25rem;
-    margin-bottom: 0.5rem;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border: 1.5px solid transparent;
-    animation: fadeInUp 0.4s ease-out both;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity 0.2s;
   }
-
-  .chapter-item:hover {
-    background: var(--bg-card);
-    border-color: var(--border-hover);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(124, 58, 237, 0.04);
-    transform: translateX(6px);
-  }
-
-  .chapter-main { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
-
-  .chapter-num {
-    width: 40px;
-    height: 40px;
+  .chapter-item:hover { opacity: 0.6; }
+  .chapter-item:last-child { border-bottom: none; }
+  .chapter-info {
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--accent-dim) 0%, var(--accent) 100%);
-    color: #fff;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    border-radius: 12px;
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px var(--accent-glow);
+    gap: 14px;
+    min-width: 0;
   }
-
-  .chapter-info { min-width: 0; }
-
-  .chapter-item h3 {
-    font-size: 0.9375rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 0.25rem;
+  .chapter-num {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+    min-width: 28px;
+  }
+  .chapter-title {
+    font-size: 14px;
+    color: var(--text);
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
   }
-
-  .chapter-item .meta { font-size: 0.75rem; color: var(--text-faint); letter-spacing: 0.02em; }
-
-  .chapter-actions {
+  .chapter-meta {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 12px;
     flex-shrink: 0;
   }
-
-  .bookmark-badge {
-    color: var(--accent-light);
-    font-size: 1rem;
-    filter: drop-shadow(0 0 6px var(--accent-glow));
+  .bookmarked {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
   }
-
-  .chapter-arrow {
-    color: var(--text-faint);
-    transition: all 0.3s ease;
-  }
-
-  .chapter-item:hover .chapter-arrow {
-    color: var(--accent-light);
-    transform: translateX(3px);
-  }
-
-  /* Footer */
-  footer {
-    padding: 2rem 0;
-    text-align: center;
-  }
-
-  .footer-line {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
-    margin-bottom: 2rem;
-  }
-
-  footer p {
-    font-size: 0.75rem;
-    color: var(--text-faint);
-    letter-spacing: 0.08em;
-  }
-
-  @media (max-width: 640px) {
-    .chapter-item:hover {
-      transform: translateX(3px);
-    }
+  .chapter-date {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
   }
 </style>
