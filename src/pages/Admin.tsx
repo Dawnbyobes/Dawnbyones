@@ -82,13 +82,8 @@ function DashboardTab() {
   );
 }
 
-// 从标题自动生成 URL 标识
 function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\w\u4e00-\u9fff]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    || "untitled";
+  return title.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
 }
 
 function NovelsAdmin() {
@@ -115,21 +110,14 @@ function NovelsAdmin() {
     setError("");
     try {
       if (editing) {
-        const { error: updErr } = await supabase.from("novels").update({ 
-          title: title.trim(), description: description || null, category: category || null, status, updated_at: now 
-        }).eq("id", editing.id);
+        const { error: updErr } = await supabase.from("novels").update({ title: title.trim(), description: description || null, category: category || null, status, updated_at: now }).eq("id", editing.id);
         if (updErr) { setError(updErr.message); return; }
       } else {
-        const { error: insErr } = await supabase.from("novels").insert({ 
-          title: title.trim(), slug, description: description || null, category: category || null, status, 
-          word_count: 0, chapter_count: 0, is_published: publishNow, updated_at: now 
-        });
+        const { error: insErr } = await supabase.from("novels").insert({ title: title.trim(), slug, description: description || null, category: category || null, status, word_count: 0, chapter_count: 0, is_published: publishNow, updated_at: now });
         if (insErr) { setError("创建失败: " + insErr.message); return; }
       }
       reset(); setShowForm(false); load();
-    } catch (err: any) {
-      setError(err.message || "操作失败");
-    }
+    } catch (err: any) { setError(err.message || "操作失败"); }
   };
 
   const del = async (id: number) => { if (!confirm("确定删除？")) return; await supabase.from("novels").delete().eq("id", id); load(); };
@@ -157,7 +145,7 @@ function NovelsAdmin() {
         </form>
       )}
       <div className="space-y-2">
-        {novels.map(n => <div key={n.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg"><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="text-white text-sm font-medium truncate">{n.title}</p><span className={`text-[10px] px-1.5 py-0.5 rounded ${n.is_published?"bg-[#1a2a1a] text-[#7c9a6e]":"bg-[#2a2a2a] text-[#666]"}`}>{n.is_published?"已发布":"未发布"}</span><span className={`text-[10px] px-1.5 py-0.5 rounded ${n.status==="ongoing"?"bg-[#1a1a2a] text-[#7e8aad]":n.status==="completed"?"bg-[#2a1a1a] text-[#ad8a7e]":"bg-[#2a2a1a] text-[#9a9a6e]"}`}>{n.status==="ongoing"?"连载中":n.status==="completed"?"已完结":"暂停"}</span></div><p className="text-[#555] text-xs">{n.chapter_count}章 · {n.category ?? "未分类"}</p></div><div className="flex items-center gap-1 flex-shrink-0 ml-4"><button onClick={() => togglePublish(n)} className="p-1.5 text-[#555] hover:text-white transition-colors" title={n.is_published?"下架":"发布"}>{n.is_published?<EyeOff className="w-3.5 h-3.5" />:<Eye className="w-3.5 h-3.5" />}</button><button onClick={() => { setEditing(n); setTitle(n.title); setDescription(n.description??""); setCategory(n.category??""); setStatus(n.status); setShowForm(true); }} className="p-1.5 text-[#555] hover:text-white transition-colors"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => del(n.id)} className="p-1.5 text-[#555] hover:text-[#c44444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button></div></div>)}
+        {novels.map(n => <div key={n.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg"><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="text-white text-sm font-medium truncate">{n.title}</p><span className={`text-[10px] px-1.5 py-0.5 rounded ${n.is_published?"bg-[#1a2a1a] text-[#7c9a6e]":"bg-[#2a2a2a] text-[#666]"}`}>{n.is_published?"已发布":"未发布"}</span><span className={`text-[10px] px-1.5 py-0.5 rounded ${n.status==="ongoing"?"bg-[#1a1a2a] text-[#7e8aad]":n.status==="completed"?"bg-[#2a1a1a] text-[#ad8a7e]":"bg-[#2a2a1a] text-[#9a9a6e]"}`}>{n.status==="ongoing"?"连载中":n.status==="completed"?"已完结":"暂停"}</span></div><p className="text-[#555] text-xs">{n.chapter_count}章 · {n.word_count.toLocaleString()}字 · {n.category ?? "未分类"}</p></div><div className="flex items-center gap-1 flex-shrink-0 ml-4"><button onClick={() => togglePublish(n)} className="p-1.5 text-[#555] hover:text-white transition-colors" title={n.is_published?"下架":"发布"}>{n.is_published?<EyeOff className="w-3.5 h-3.5" />:<Eye className="w-3.5 h-3.5" />}</button><button onClick={() => { setEditing(n); setTitle(n.title); setDescription(n.description??""); setCategory(n.category??""); setStatus(n.status); setShowForm(true); }} className="p-1.5 text-[#555] hover:text-white transition-colors"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => del(n.id)} className="p-1.5 text-[#555] hover:text-[#c44444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button></div></div>)}
       </div>
     </div>
   );
@@ -273,32 +261,48 @@ function AnnouncementsAdmin() {
 }
 
 function ReadersAdmin() {
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const [readers, setReaders] = useState<any[]>([]);
   const [codes, setCodes] = useState<InviteCode[]>([]);
 
-  useEffect(() => {
-    supabase.from("profiles").select("*").order("created_at", { ascending: false }).then(({ data }) => { if (data) setProfiles(data); });
+  const load = () => {
+    supabase.from("profiles").select("*").order("created_at", { ascending: false }).then(({ data: profiles }) => {
+      if (!profiles) { setReaders([]); return; }
+      supabase.from("invite_codes").select("*").not("used_by", "is", null).then(({ data: usedCodes }) => {
+        const readersWithCode = profiles.map(p => {
+          const usedCode = usedCodes?.find(c => c.used_by === p.id);
+          return { ...p, invite_code: usedCode?.code ?? "-" };
+        });
+        setReaders(readersWithCode);
+      });
+    });
     supabase.from("invite_codes").select("*").order("created_at", { ascending: false }).then(({ data }) => { if (data) setCodes(data); });
-  }, []);
+  };
+  useEffect(() => { load(); }, []);
 
   return (
     <div>
       <div className="flex gap-4 mb-6">
-        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">总读者</p><p className="text-xl font-semibold text-white">{profiles.length}</p></div>
+        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">总读者</p><p className="text-xl font-semibold text-white">{readers.length}</p></div>
         <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">已用邀请码</p><p className="text-xl font-semibold text-white">{codes.filter(c => c.used).length}</p></div>
         <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">剩余邀请码</p><p className="text-xl font-semibold text-white">{codes.filter(c => !c.used).length}</p></div>
       </div>
-      <h3 className="text-sm font-medium text-white mb-4">读者列表</h3>
+
       <div className="space-y-2">
-        {profiles.map(p => <div key={p.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg">
-          <div className="min-w-0 flex-1">
-            <p className="text-white text-sm font-medium truncate">{p.display_name ?? "未命名读者"}</p>
-            <p className="text-[#555] text-xs">ID: {p.reader_id}</p>
+        {readers.map(r => (
+          <div key={r.id} className="py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-white text-sm font-medium">{r.display_name ?? r.reader_id}</p>
+              <span className="text-[#444] text-xs">{new Date(r.created_at).toLocaleDateString("zh-CN")}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <p className="text-[#555]"><span className="text-[#444]">ID:</span> {r.reader_id}</p>
+              <p className="text-[#555]"><span className="text-[#444]">邮箱:</span> {r.email ?? "-"}</p>
+              <p className="text-[#555] col-span-2"><span className="text-[#444]">邀请码:</span> <span className="font-mono">{r.invite_code}</span></p>
+            </div>
           </div>
-          <span className="text-[#444] text-xs flex-shrink-0">{new Date(p.created_at).toLocaleDateString("zh-CN")}</span>
-        </div>)}
+        ))}
       </div>
-      {profiles.length === 0 && <div className="text-center py-12 text-[#555] text-sm">暂无读者</div>}
+      {readers.length === 0 && <div className="text-center py-12 text-[#555] text-sm">暂无读者</div>}
     </div>
   );
 }
