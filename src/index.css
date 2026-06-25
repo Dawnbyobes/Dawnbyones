@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.625rem;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 90%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 90%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 90%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 53%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 50% 52%;
+    --border: 0 0% 13%;
+    --input: 0 0% 13%;
+    --ring: 0 0% 27%;
+  }
+
+  body {
+    @apply bg-[#0a0a0a] text-[#e5e5e5];
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    line-height: 1.8;
+    min-height: 100vh;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+}
