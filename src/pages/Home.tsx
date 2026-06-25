@@ -1,16 +1,7 @@
 import { Link } from "react-router-dom";
-import { BookOpen, Lock, RefreshCw, MessageSquare } from "lucide-react";
-import { supabase, type Novel } from "@/lib/supabase";
-import { useState, useEffect } from "react";
+import { Lock, RefreshCw, MessageSquare } from "lucide-react";
 
 export default function Home() {
-  const [novels, setNovels] = useState<Novel[]>([]);
-
-  useEffect(() => {
-    supabase.from("novels").select("*").eq("is_published", true).order("updated_at", { ascending: false })
-      .then(({ data }) => { if (data) setNovels(data); });
-  }, []);
-
   return (
     <div>
       <section className="text-center py-24 sm:py-32 px-4">
@@ -22,42 +13,6 @@ export default function Home() {
       </section>
 
       <div className="max-w-2xl mx-auto px-4">
-        <div className="h-px bg-[#1a1a1a] mb-16" />
-
-        <section className="mb-16">
-          <h2 className="text-xs text-[#555] uppercase tracking-[0.15em] mb-8">作品</h2>
-          {novels.length > 0 ? (
-            <div className="space-y-4">
-              {novels.map((novel) => (
-                <Link key={novel.id} to={`/novel/${novel.slug}`} className="block group">
-                  <div className="border-b border-[#111] pb-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white text-base font-medium mb-1.5 group-hover:opacity-80 transition-opacity">{novel.title}</h3>
-                        <p className="text-[#666] text-sm line-clamp-2 leading-relaxed">{novel.description ?? "暂无简介"}</p>
-                        <div className="flex items-center gap-4 mt-3 text-[#444] text-xs">
-                          <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" />{novel.chapter_count} 章</span>
-                          <span>{novel.status === "ongoing" ? "连载中" : novel.status === "completed" ? "已完结" : "暂停"}</span>
-                          {novel.category && <span>{novel.category}</span>}
-                        </div>
-                      </div>
-                      {novel.cover ? (
-                        <img src={novel.cover} alt={novel.title} className="w-16 h-22 object-cover rounded-md flex-shrink-0 bg-[#111]" />
-                      ) : (
-                        <div className="w-16 h-22 bg-[#111] rounded-md flex items-center justify-center flex-shrink-0">
-                          <BookOpen className="w-6 h-6 text-[#333]" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-[#444] text-sm">暂无作品，管理员可在后台添加。</div>
-          )}
-        </section>
-
         <div className="h-px bg-[#1a1a1a] mb-16" />
 
         <section className="mb-16">
