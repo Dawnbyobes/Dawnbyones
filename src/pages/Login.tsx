@@ -28,14 +28,21 @@ export default function Login() {
     });
   }, []);
 
+  const goDashboard = () => {
+    window.location.hash = "#/dashboard";
+    window.location.reload();
+  };
+
   const checkInviteStatus = async (userId: string) => {
     const { data: codes } = await supabase
       .from("invite_codes")
       .select("*")
       .eq("used_by", userId)
       .limit(1);
-    setIsInvited(!!codes && codes.length > 0);
+    const invited = !!codes && codes.length > 0;
+    setIsInvited(invited);
     setChecking(false);
+    if (invited) goDashboard();
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -88,8 +95,8 @@ export default function Login() {
         .from("invite_codes")
         .update({ used: true, used_by: signUpData.user.id, used_at: new Date().toISOString() })
         .eq("id", codeRecord.id);
-      setSuccess("注册成功！正在刷新...");
-      setTimeout(() => window.location.reload(), 1000);
+      setSuccess("注册成功！正在跳转...");
+      setTimeout(() => goDashboard(), 1000);
     }
     setLoading(false);
   };
@@ -107,8 +114,8 @@ export default function Login() {
     if (!record) { setError("邀请码不存在"); return; }
     if (record.used) { setError("邀请码已被使用"); return; }
     await supabase.from("invite_codes").update({ used: true, used_by: user.id, used_at: new Date().toISOString() }).eq("id", record.id);
-    setSuccess("验证成功！");
-    setIsInvited(true);
+    setSuccess("验证成功！正在跳转...");
+    setTimeout(() => goDashboard(), 1000);
   };
 
   if (checking) {
@@ -164,9 +171,10 @@ export default function Login() {
               <p className="text-[#555] text-xs mt-1">已通过邀请验证</p>
             </div>
             <div className="space-y-2">
-              <Link to="/" className="block w-full py-2.5 bg-white text-[#0a0a0a] rounded-md text-sm font-medium text-center hover:opacity-85 transition-opacity">
-                进入首页
-              </Link>
+              <button onClick={() => goDashboard()}
+                className="block w-full py-2.5 bg-white text-[#0a0a0a] rounded-md text-sm font-medium text-center hover:opacity-85 transition-opacity">
+                进入主页
+              </button>
             </div>
           </div>
         </div>
