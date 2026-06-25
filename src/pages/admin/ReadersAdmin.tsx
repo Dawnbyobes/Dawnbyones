@@ -7,45 +7,64 @@ export default function ReadersAdmin() {
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [debug, setDebug] = useState("");
 
   const load = async () => {
     setLoading(true);
     setError("");
+    setDebug("正在加载...");
 
-    // 加载读者列表
-    const { data: profiles, error: profilesErr } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      // 第一步：查 profiles
+      console.log("[ReadersAdmin] 开始加载 profiles...");
+      const { data: profiles, error: profilesErr } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (profilesErr) {
-      console.error("profiles 加载失败:", profilesErr);
-      setError("加载读者失败: " + profilesErr.message);
-      setLoading(false);
-      return;
+      console.log("[ReadersAdmin] profiles 结果:", { count: profiles?.length ?? 0, error: profilesErr, data: profiles });
+      setDebug(`profiles: ${profiles?.length ?? 0} 条${profilesErr ? `, 错误: ${profilesErr.message}` : ""}`);
+
+      if (profilesErr) {
+        setError("加载读者失败: " + profilesErr.message);
+        setLoading(false);
+        return;
+      }
+
+      // 第二步：查已使用的邀请码
+      const { data: usedCodes, error: usedCodesErr } = await supabase
+        .from("invite_codes")
+        .select("*")
+        .not("used_by", "is", null);
+
+      console.log("[ReadersAdmin] usedCodes 结果:", { count: usedCodes?.length ?? 0, error: usedCodesErr });
+      setDebug(prev => prev + ` | usedCodes: ${usedCodes?.length ?? 0} 条`);
+
+      // 关联读者和邀请码
+      if (profiles) {
+        const readersWithCode = profiles.map((p: any) => {
+          const usedCode = usedCodes?.find((c: any) => c.used_by === p.id);
+          return { ...p, invite_code: usedCode?.code ?? "-" };
+        });
+        setReaders(readersWithCode);
+      }
+
+      // 第三步：查所有邀请码（统计用）
+      const { data: allCodes, error: allCodesErr } = await supabase
+        .from("invite_codes")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      console.log("[ReadersAdmin] allCodes 结果:", { count: allCodes?.length ?? 0, error: allCodesErr });
+      setDebug(prev => prev + ` | allCodes: ${allCodes?.length ?? 0} 条`);
+
+      if (allCodes) setCodes(allCodes);
+      if (allCodesErr) setDebug(prev => prev + ` | allCodesErr: ${allCodesErr.message}`);
+    } catch (e: any) {
+      console.error("[ReadersAdmin] 加载异常:", e);
+      setError("加载失败: " + (e.message || "未知错误"));
+      setDebug("异常: " + (e.message || "未知错误"));
     }
-
-    // 加载已使用的邀请码
-    const { data: usedCodes } = await supabase
-      .from("invite_codes")
-      .select("*")
-      .not("used_by", "is", null);
-
-    // 关联读者和邀请码
-    if (profiles) {
-      const readersWithCode = profiles.map((p: any) => {
-        const usedCode = usedCodes?.find((c: any) => c.used_by === p.id);
-        return { ...p, invite_code: usedCode?.code ?? "-" };
-      });
-      setReaders(readersWithCode);
-    }
-
-    // 加载所有邀请码用于统计
-    const { data: allCodes } = await supabase
-      .from("invite_codes")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (allCodes) setCodes(allCodes);
 
     setLoading(false);
   };
@@ -54,10 +73,7 @@ export default function ReadersAdmin() {
   useEffect(() => {
     load();
 
-    // 每 10 秒自动刷新一次
     const interval = setInterval(load, 10000);
-
-    // 页面重新获得焦点时刷新
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
 
@@ -92,6 +108,11 @@ export default function ReadersAdmin() {
           <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
           刷新
         </button>
+      </div>
+
+      {/* 调试信息 */}
+      <div className="mb-3 p-2 bg-[#0a0a0a] border border-[#222] rounded text-[10px] text-[#666] font-mono">
+        调试: {debug || "未加载"}
       </div>
 
       {error && (
