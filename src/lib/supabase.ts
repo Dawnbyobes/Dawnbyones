@@ -42,11 +42,12 @@ export type Chapter = {
 };
 
 export type Comment = {
-  id: number;
+  id: string;
   chapter_id: string;
   user_id: string;
-  user_name: string;
+  user_name: string | null;
   content: string;
+  reader_id: string | null;
   created_at: string;
 };
 
@@ -66,11 +67,11 @@ export type Admin = {
   created_at: string;
 };
 
+// 修复：与数据库 reading_progress 表的字段保持一致
 export type ReadingProgress = {
-  id: number;
+  id: string;
   user_id: string;
-  novel_id: number;
   chapter_id: string;
-  progress: number;
+  scroll_position: number;
   updated_at: string;
 };
