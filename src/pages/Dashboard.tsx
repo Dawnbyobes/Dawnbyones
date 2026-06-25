@@ -1,15 +1,43 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { BookOpen, Bell, Clock, ChevronRight, Library, Volume2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { BookOpen, Bell, Clock, ChevronRight, Library, Volume2, Loader2 } from "lucide-react";
 import { supabase, type Novel, type Announcement } from "@/lib/supabase";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [novels, setNovels] = useState<Novel[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    // 加载已发布的作品
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        // 未登录 -> 跳转到登录页
+        navigate("/login");
+        return;
+      }
+      setUser(data.user);
+
+      // 检查是否已验证邀请码
+      supabase
+        .from("invite_codes")
+        .select("*")
+        .eq("used_by", data.user.id)
+        .limit(1)
+        .then(({ data: codes }) => {
+          if (!codes || codes.length === 0) {
+            // 未验证邀请码 -> 跳转到登录页
+            navigate("/login");
+            return;
+          }
+          // 已登录且已验证 -> 加载数据
+          loadData();
+        });
+    });
+  }, [navigate]);
+
+  const loadData = () => {
     supabase
       .from("novels")
       .select("*")
@@ -19,7 +47,6 @@ export default function Dashboard() {
         if (data) setNovels(data);
       });
 
-    // 加载公告
     supabase
       .from("announcements")
       .select("*")
@@ -30,15 +57,12 @@ export default function Dashboard() {
         if (data) setAnnouncements(data);
         setLoading(false);
       });
-  }, []);
+  };
 
-  if (loading) {
+  if (loading || !user) {
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-[#1a1a1a] rounded w-1/4" />
-          <div className="h-32 bg-[#111] rounded-lg" />
-        </div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <Loader2 className="w-5 h-5 animate-spin text-[#555]" />
       </div>
     );
   }
@@ -102,7 +126,6 @@ export default function Dashboard() {
                 to={`/novel/${novel.slug}`}
                 className="group bg-[#111] border border-[#1a1a1a] rounded-lg p-4 hover:border-[#333] transition-colors flex gap-4"
               >
-                {/* 封面 */}
                 {novel.cover ? (
                   <img
                     src={novel.cover}
@@ -114,8 +137,6 @@ export default function Dashboard() {
                     <BookOpen className="w-8 h-8 text-[#333]" />
                   </div>
                 )}
-
-                {/* 信息 */}
                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1.5">
@@ -142,7 +163,6 @@ export default function Dashboard() {
                       {novel.description ?? "暂无简介"}
                     </p>
                   </div>
-
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 text-[#444] text-xs">
                       <span>{novel.chapter_count} 章</span>
