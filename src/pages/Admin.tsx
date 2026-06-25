@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, FileText, Users, MessageSquare, Key, BarChart3, Plus, Edit, Trash2, Loader2, Check } from "lucide-react";
-import { supabase, type Novel, type Chapter, type InviteCode } from "@/lib/supabase";
+import { BookOpen, FileText, Users, MessageSquare, Key, BarChart3, Plus, Edit, Trash2, Loader2, Check, Volume2, Megaphone } from "lucide-react";
+import { supabase, type Novel, type Chapter, type InviteCode, type Announcement } from "@/lib/supabase";
 
-type Tab = "dashboard" | "novels" | "chapters" | "readers" | "invites";
+type Tab = "dashboard" | "novels" | "chapters" | "announcements" | "readers" | "invites";
 
 export default function Admin() {
   const [user, setUser] = useState<any>(null);
@@ -30,6 +30,7 @@ export default function Admin() {
     { key: "dashboard" as Tab, label: "概览", icon: <BarChart3 className="w-4 h-4" /> },
     { key: "novels" as Tab, label: "作品", icon: <BookOpen className="w-4 h-4" /> },
     { key: "chapters" as Tab, label: "章节", icon: <FileText className="w-4 h-4" /> },
+    { key: "announcements" as Tab, label: "公告", icon: <Megaphone className="w-4 h-4" /> },
     { key: "readers" as Tab, label: "读者", icon: <Users className="w-4 h-4" /> },
     { key: "invites" as Tab, label: "邀请码", icon: <Key className="w-4 h-4" /> },
   ];
@@ -43,32 +44,33 @@ export default function Admin() {
       <div className="flex gap-1 mb-8 border-b border-[#1a1a1a] overflow-x-auto">
         {tabs.map(t => <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 transition-colors whitespace-nowrap ${tab===t.key?"border-white text-white":"border-transparent text-[#555] hover:text-[#888]"}`}>{t.icon}{t.label}</button>)}
       </div>
-      {tab === "dashboard" && <Dashboard />}
+      {tab === "dashboard" && <DashboardTab />}
       {tab === "novels" && <NovelsAdmin />}
       {tab === "chapters" && <ChaptersAdmin />}
+      {tab === "announcements" && <AnnouncementsAdmin />}
       {tab === "readers" && <ReadersAdmin />}
       {tab === "invites" && <InvitesAdmin />}
     </div>
   );
 }
 
-function Dashboard() {
-  const [stats, setStats] = useState({ novels: 0, chapters: 0, users: 0, comments: 0 });
+function DashboardTab() {
+  const [stats, setStats] = useState({ novels: 0, chapters: 0, users: 0, comments: 0, announcements: 0 });
   const [recentCh, setRecentCh] = useState<any[]>([]);
 
   useEffect(() => {
     supabase.from("novels").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, novels: count ?? 0 })));
     supabase.from("chapters").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, chapters: count ?? 0 })));
     supabase.from("comments").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, comments: count ?? 0 })));
-    // 修复：添加读者数量统计
     supabase.from("profiles").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, users: count ?? 0 })));
+    supabase.from("announcements").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, announcements: count ?? 0 })));
     supabase.from("chapters").select("*, novels(title)").order("created_at", { ascending: false }).limit(5).then(({ data }) => { if (data) setRecentCh(data); });
   }, []);
 
   return (
     <div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        {[{label:"作品",icon:<BookOpen className="w-4 h-4 text-[#555]"/>,v:stats.novels},{label:"章节",icon:<FileText className="w-4 h-4 text-[#555]"/>,v:stats.chapters},{label:"评论",icon:<MessageSquare className="w-4 h-4 text-[#555]"/>,v:stats.comments},{label:"读者",icon:<Users className="w-4 h-4 text-[#555]"/>,v:stats.users}].map((s,i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
+        {[{label:"作品",icon:<BookOpen className="w-4 h-4 text-[#555]"/>,v:stats.novels},{label:"章节",icon:<FileText className="w-4 h-4 text-[#555]"/>,v:stats.chapters},{label:"评论",icon:<MessageSquare className="w-4 h-4 text-[#555]"/>,v:stats.comments},{label:"读者",icon:<Users className="w-4 h-4 text-[#555]"/>,v:stats.users},{label:"公告",icon:<Volume2 className="w-4 h-4 text-[#555]"/>,v:stats.announcements}].map((s,i) => (
           <div key={i} className="bg-[#111] border border-[#1a1a1a] rounded-lg p-4"><div className="flex items-center gap-2 mb-2">{s.icon}<span className="text-xs text-[#555]">{s.label}</span></div><p className="text-2xl font-semibold text-white">{s.v}</p></div>
         ))}
       </div>
@@ -96,7 +98,6 @@ function NovelsAdmin() {
     if (!form.title || !form.slug) return;
     const now = new Date().toISOString();
     if (editing) {
-      // 修复：更新时包含 updated_at 字段
       await supabase.from("novels").update({ ...form, updated_at: now }).eq("id", editing.id);
     } else {
       await supabase.from("novels").insert({ ...form, word_count: 0, chapter_count: 0, is_published: false, updated_at: now });
@@ -129,7 +130,7 @@ function NovelsAdmin() {
         </form>
       )}
       <div className="space-y-2">
-        {novels.map(n => <div key={n.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg"><div className="min-w-0 flex-1"><p className="text-white text-sm font-medium truncate">{n.title}</p><p className="text-[#555] text-xs">/{n.slug} · {n.chapter_count}章</p></div><div className="flex items-center gap-1 flex-shrink-0 ml-4"><button onClick={() => { setEditing(n); setForm({ title: n.title, slug: n.slug, description: n.description??"", cover: n.cover??"", category: n.category??"", tags: n.tags??"", status: n.status, author_note: n.author_note??"" }); setShowForm(true); }} className="p-1.5 text-[#555] hover:text-white transition-colors"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => del(n.id)} className="p-1.5 text-[#555] hover:text-[#c44444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button></div></div>)}
+        {novels.map(n => <div key={n.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg"><div className="min-w-0 flex-1"><p className="text-white text-sm font-medium truncate">{n.title}</p><p className="text-[#555] text-xs">/{n.slug} · {n.chapter_count}章 · {n.is_published ? "已发布" : "未发布"}</p></div><div className="flex items-center gap-1 flex-shrink-0 ml-4"><button onClick={() => { setEditing(n); setForm({ title: n.title, slug: n.slug, description: n.description??"", cover: n.cover??"", category: n.category??"", tags: n.tags??"", status: n.status, author_note: n.author_note??"" }); setShowForm(true); }} className="p-1.5 text-[#555] hover:text-white transition-colors"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => del(n.id)} className="p-1.5 text-[#555] hover:text-[#c44444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button></div></div>)}
       </div>
     </div>
   );
@@ -159,7 +160,6 @@ function ChaptersAdmin() {
     const wordCount = form.content.length;
     const now = new Date().toISOString();
     if (editing) {
-      // 修复：更新时包含 updated_at 字段
       await supabase.from("chapters").update({ title: form.title, order_num: form.order_num, content: form.content, status: form.status, word_count: wordCount, updated_at: now }).eq("id", editing.id);
     } else {
       const id = crypto.randomUUID();
@@ -194,7 +194,57 @@ function ChaptersAdmin() {
   );
 }
 
-// 修复：ReadersAdmin 现在显示真正的读者列表
+function AnnouncementsAdmin() {
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Announcement | null>(null);
+  const [content, setContent] = useState("");
+  const [active, setActive] = useState(true);
+
+  const load = () => supabase.from("announcements").select("*").order("created_at", { ascending: false }).then(({ data }) => { if (data) setAnnouncements(data); });
+  useEffect(() => { load(); }, []);
+
+  const reset = () => { setContent(""); setActive(true); setEditing(null); };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!content.trim()) return;
+    const now = new Date().toISOString();
+    if (editing) {
+      await supabase.from("announcements").update({ content: content.trim(), active, updated_at: now }).eq("id", editing.id);
+    } else {
+      await supabase.from("announcements").insert({ content: content.trim(), active, updated_at: now });
+    }
+    reset(); setShowForm(false); load();
+  };
+
+  const del = async (id: string) => { if (!confirm("确定删除这条公告？")) return; await supabase.from("announcements").delete().eq("id", id); load(); };
+  const toggleActive = async (a: Announcement) => {
+    await supabase.from("announcements").update({ active: !a.active, updated_at: new Date().toISOString() }).eq("id", a.id);
+    load();
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between mb-4"><span className="text-sm text-[#555]">{announcements.length} 条公告</span><button onClick={() => { reset(); setShowForm(!showForm); }} className="flex items-center gap-1 px-3 py-1.5 bg-white text-[#0a0a0a] rounded-md text-xs font-medium hover:opacity-85 transition-opacity"><Plus className="w-3.5 h-3.5" />发布公告</button></div>
+      {showForm && (
+        <form onSubmit={submit} className="bg-[#111] border border-[#1a1a1a] rounded-lg p-4 mb-6 space-y-3">
+          <textarea placeholder="公告内容 *" value={content} onChange={e => setContent(e.target.value)} rows={4} required className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444] resize-none" />
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="active" checked={active} onChange={e => setActive(e.target.checked)} className="w-4 h-4 accent-white" />
+            <label htmlFor="active" className="text-sm text-[#aaa]">立即显示</label>
+          </div>
+          <div className="flex gap-2"><button type="submit" className="px-4 py-2 bg-white text-[#0a0a0a] rounded-md text-xs font-medium hover:opacity-85 transition-opacity">{editing ? "更新" : "发布"}</button><button type="button" onClick={() => { reset(); setShowForm(false); }} className="px-4 py-2 border border-[#333] text-[#888] rounded-md text-xs hover:border-[#555] hover:text-white transition-colors">取消</button></div>
+        </form>
+      )}
+      <div className="space-y-2">
+        {announcements.map(a => <div key={a.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg"><div className="min-w-0 flex-1"><div className="flex items-center gap-2 mb-1"><span className={`text-[10px] px-1.5 py-0.5 rounded ${a.active?"bg-[#1a2a1a] text-[#7c9a6e]":"bg-[#2a2a2a] text-[#666]"}`}>{a.active?"显示中":"已隐藏"}</span><span className="text-[#444] text-xs">{new Date(a.created_at).toLocaleDateString("zh-CN")}</span></div><p className="text-[#aaa] text-sm">{a.content}</p></div><div className="flex items-center gap-1 flex-shrink-0 ml-4"><button onClick={() => toggleActive(a)} className="p-1.5 text-[#555] hover:text-white transition-colors" title={a.active?"隐藏":"显示"}><Volume2 className="w-3.5 h-3.5" /></button><button onClick={() => { setEditing(a); setContent(a.content); setActive(a.active); setShowForm(true); }} className="p-1.5 text-[#555] hover:text-white transition-colors"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => del(a.id)} className="p-1.5 text-[#555] hover:text-[#c44444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button></div></div>)}
+        {announcements.length === 0 && <div className="text-center py-12 text-[#555] text-sm">暂无公告</div>}
+      </div>
+    </div>
+  );
+}
+
 function ReadersAdmin() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [codes, setCodes] = useState<InviteCode[]>([]);
