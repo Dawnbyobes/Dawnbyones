@@ -1,16 +1,39 @@
-import { Link } from "react-router-dom";
-import { BookOpen, ArrowRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { BookOpen, ArrowRight, Loader2 } from "lucide-react";
 import { supabase, type Novel } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 
 export default function Novels() {
+  const navigate = useNavigate();
   const [novels, setNovels] = useState<Novel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        navigate("/login");
+        return;
+      }
+      supabase.from("invite_codes").select("*").eq("used_by", data.user.id).limit(1).then(({ data: codes }) => {
+        if (!codes || codes.length === 0) {
+          navigate("/login");
+          return;
+        }
+        setAuthChecked(true);
+      });
+    });
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!authChecked) return;
     supabase.from("novels").select("*").eq("is_published", true).order("updated_at", { ascending: false })
       .then(({ data }) => { if (data) setNovels(data); setLoading(false); });
-  }, []);
+  }, [authChecked]);
+
+  if (!authChecked) {
+    return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#555]" /></div>;
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
