@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, FileText, Users, Key, BarChart3, Plus, Edit, Trash2, Loader2, Check, Volume2, Megaphone, Eye, EyeOff } from "lucide-react";
-import { supabase, type Novel, type Chapter, type InviteCode, type Announcement } from "@/lib/supabase";
+import { supabase, type Novel, type InviteCode, type Announcement } from "@/lib/supabase";
 import ReadersAdmin from "./admin/ReadersAdmin";
+import ChaptersAdmin from "./admin/ChaptersAdmin";
 
 type Tab = "dashboard" | "novels" | "chapters" | "announcements" | "readers" | "invites";
 
@@ -147,64 +148,6 @@ function NovelsAdmin() {
       <div className="space-y-2">
         {novels.map(n => <div key={n.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg"><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="text-white text-sm font-medium truncate">{n.title}</p><span className={`text-[10px] px-1.5 py-0.5 rounded ${n.is_published?"bg-[#1a2a1a] text-[#7c9a6e]":"bg-[#2a2a2a] text-[#666]"}`}>{n.is_published?"已发布":"未发布"}</span><span className={`text-[10px] px-1.5 py-0.5 rounded ${n.status==="ongoing"?"bg-[#1a1a2a] text-[#7e8aad]":n.status==="completed"?"bg-[#2a1a1a] text-[#ad8a7e]":"bg-[#2a2a1a] text-[#9a9a6e]"}`}>{n.status==="ongoing"?"连载中":n.status==="completed"?"已完结":"暂停"}</span></div><p className="text-[#555] text-xs">{n.chapter_count}章 · {n.word_count.toLocaleString()}字 · {n.category ?? "未分类"}</p></div><div className="flex items-center gap-1 flex-shrink-0 ml-4"><button onClick={() => togglePublish(n)} className="p-1.5 text-[#555] hover:text-white transition-colors" title={n.is_published?"下架":"发布"}>{n.is_published?<EyeOff className="w-3.5 h-3.5" />:<Eye className="w-3.5 h-3.5" />}</button><button onClick={() => { setEditing(n); setTitle(n.title); setDescription(n.description??""); setCategory(n.category??""); setStatus(n.status); setShowForm(true); }} className="p-1.5 text-[#555] hover:text-white transition-colors"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => del(n.id)} className="p-1.5 text-[#555] hover:text-[#c44444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button></div></div>)}
       </div>
-    </div>
-  );
-}
-
-function ChaptersAdmin() {
-  const [novels, setNovels] = useState<Novel[]>([]);
-  const [selNovel, setSelNovel] = useState<number | null>(null);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Chapter | null>(null);
-  const [form, setForm] = useState({ novel_id: 0, title: "", order_num: 1, content: "", status: "published" as "draft"|"published" });
-
-  useEffect(() => { supabase.from("novels").select("*").then(({ data }) => { if (data) setNovels(data); }); }, []);
-
-  const loadCh = () => {
-    if (!selNovel) return;
-    supabase.from("chapters").select("*").eq("novel_id", selNovel).order("order_num").then(({ data }) => { if (data) setChapters(data); });
-  };
-  useEffect(() => { loadCh(); }, [selNovel]);
-
-  const sel = novels.find(n => n.id === selNovel);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title || !form.content || !selNovel) return;
-    const wordCount = form.content.length;
-    const now = new Date().toISOString();
-    if (editing) {
-      await supabase.from("chapters").update({ title: form.title, order_num: form.order_num, content: form.content, status: form.status, word_count: wordCount, updated_at: now }).eq("id", editing.id);
-    } else {
-      const id = crypto.randomUUID();
-      await supabase.from("chapters").insert({ id, novel_id: selNovel, title: form.title, order_num: form.order_num, content: form.content, status: form.status, word_count: wordCount, updated_at: now });
-    }
-    setShowForm(false); setEditing(null); setForm({ novel_id: 0, title: "", order_num: 1, content: "", status: "published" }); loadCh();
-  };
-
-  const del = async (id: string) => { if (!confirm("确定删除？")) return; await supabase.from("chapters").delete().eq("id", id); loadCh(); };
-
-  return (
-    <div>
-      <div className="mb-4">
-        <select value={selNovel ?? ""} onChange={e => setSelNovel(Number(e.target.value) || null)} className="w-full sm:w-auto bg-[#111] border border-[#1a1a1a] rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-[#444]">
-          <option value="">选择作品...</option>{novels.map(n => <option key={n.id} value={n.id}>{n.title}</option>)}
-        </select>
-      </div>
-      {sel && <>
-        <div className="flex justify-between items-center mb-4"><span className="text-sm text-[#555]">{chapters.length} 章 · {sel.title}</span><button onClick={() => { setEditing(null); setForm({ novel_id: selNovel!, title: "", order_num: chapters.length + 1, content: "", status: "published" }); setShowForm(!showForm); }} className="flex items-center gap-1 px-3 py-1.5 bg-white text-[#0a0a0a] rounded-md text-xs font-medium hover:opacity-85 transition-opacity"><Plus className="w-3.5 h-3.5" />新增章节</button></div>
-        {showForm && (
-          <form onSubmit={submit} className="bg-[#111] border border-[#1a1a1a] rounded-lg p-4 mb-6 space-y-3">
-            <div className="grid sm:grid-cols-2 gap-3"><input placeholder="章节标题 *" value={form.title} onChange={e => setForm({...form,title:e.target.value})} required className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444]" /><input type="number" placeholder="序号" value={form.order_num} onChange={e => setForm({...form,order_num:Number(e.target.value)})} min={1} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444]" /></div>
-            <select value={form.status} onChange={e => setForm({...form,status:e.target.value as any})} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-[#444]"><option value="published">已发布</option><option value="draft">草稿</option></select>
-            <textarea placeholder="章节内容 *" value={form.content} onChange={e => setForm({...form,content:e.target.value})} rows={12} required className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444] resize-y leading-relaxed" />
-            <div className="flex gap-2"><button type="submit" className="px-4 py-2 bg-white text-[#0a0a0a] rounded-md text-xs font-medium hover:opacity-85 transition-opacity">{editing ? "更新" : "发布"}</button><button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border border-[#333] text-[#888] rounded-md text-xs hover:border-[#555] hover:text-white transition-colors">取消</button></div>
-          </form>
-        )}
-        <div className="space-y-2">{chapters.map(ch => <div key={ch.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg"><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="text-[#555] text-xs">第{ch.order_num}章</span><span className="text-white text-sm">{ch.title}</span><span className={`text-[10px] px-1.5 py-0.5 rounded ${ch.status==="published"?"bg-[#1a2a1a] text-[#7c9a6e]":"bg-[#2a2a1a] text-[#9a9a6e]"}`}>{ch.status==="published"?"已发布":"草稿"}</span></div><p className="text-[#555] text-xs mt-0.5">{ch.word_count?.toLocaleString() ?? 0} 字</p></div><div className="flex items-center gap-1 flex-shrink-0 ml-4"><button onClick={() => { setEditing(ch); setForm({ novel_id: selNovel!, title: ch.title, order_num: ch.order_num, content: ch.content, status: ch.status }); setShowForm(true); }} className="p-1.5 text-[#555] hover:text-white transition-colors"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => del(ch.id)} className="p-1.5 text-[#555] hover:text-[#c44444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button></div></div>)}</div>
-      </>}
-      {!selNovel && <div className="text-center py-20 text-[#555] text-sm">请先选择一个作品</div>}
     </div>
   );
 }
