@@ -10,17 +10,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isReader = location.pathname.startsWith("/read");
 
+  const checkAdmin = (email: string | undefined) => {
+    if (!email) { setIsAdmin(false); return; }
+    supabase.from("admins").select("*").eq("email", email).limit(1).then(({ data: admins }) => {
+      setIsAdmin(!!admins && admins.length > 0);
+    });
+  };
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
-      if (data.user?.email) {
-        supabase.from("admins").select("*").eq("email", data.user.email).limit(1).then(({ data: admins }) => {
-          setIsAdmin(!!admins && admins.length > 0);
-        });
-      }
+      checkAdmin(data.user?.email);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      checkAdmin(u?.email);
     });
     return () => listener.subscription.unsubscribe();
   }, []);
