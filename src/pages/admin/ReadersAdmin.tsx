@@ -11,82 +11,59 @@ export default function ReadersAdmin() {
   const load = async () => {
     setLoading(true);
     setError("");
-    try {
-      // 先加载读者
-      const { data: profiles, error: profilesErr } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
 
-      if (profilesErr) {
-        setError("加载读者失败: " + profilesErr.message);
-        setLoading(false);
-        return;
-      }
+    // 加载读者列表
+    const { data: profiles, error: profilesErr } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      // 再加载已使用的邀请码
-      const { data: usedCodes, error: codesErr } = await supabase
-        .from("invite_codes")
-        .select("*")
-        .not("used_by", "is", null);
-
-      if (codesErr) {
-        setError("加载邀请码失败: " + codesErr.message);
-        setLoading(false);
-        return;
-      }
-
-      // 关联读者和邀请码
-      if (profiles) {
-        const readersWithCode = profiles.map(p => {
-          const usedCode = usedCodes?.find(c => c.used_by === p.id);
-          return { ...p, invite_code: usedCode?.code ?? "-" };
-        });
-        setReaders(readersWithCode);
-      }
-
-      // 加载所有邀请码用于统计
-      const { data: allCodes } = await supabase
-        .from("invite_codes")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (allCodes) setCodes(allCodes);
-    } catch (e: any) {
-      setError("加载失败: " + (e.message || "未知错误"));
+    if (profilesErr) {
+      console.error("profiles 加载失败:", profilesErr);
+      setError("加载读者失败: " + profilesErr.message);
+      setLoading(false);
+      return;
     }
+
+    // 加载已使用的邀请码
+    const { data: usedCodes } = await supabase
+      .from("invite_codes")
+      .select("*")
+      .not("used_by", "is", null);
+
+    // 关联读者和邀请码
+    if (profiles) {
+      const readersWithCode = profiles.map((p: any) => {
+        const usedCode = usedCodes?.find((c: any) => c.used_by === p.id);
+        return { ...p, invite_code: usedCode?.code ?? "-" };
+      });
+      setReaders(readersWithCode);
+    }
+
+    // 加载所有邀请码用于统计
+    const { data: allCodes } = await supabase
+      .from("invite_codes")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (allCodes) setCodes(allCodes);
+
     setLoading(false);
   };
 
+  // 首次加载 + 定时刷新 + 页面聚焦刷新
   useEffect(() => {
     load();
 
-    // 订阅 profiles 表的实时变更
-    const profilesChannel = supabase
-      .channel("profiles_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "profiles" },
-        () => {
-          load();
-        }
-      )
-      .subscribe();
+    // 每 10 秒自动刷新一次
+    const interval = setInterval(load, 10000);
 
-    // 订阅 invite_codes 表的实时变更
-    const codesChannel = supabase
-      .channel("invite_codes_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "invite_codes" },
-        () => {
-          load();
-        }
-      )
-      .subscribe();
+    // 页面重新获得焦点时刷新
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
 
     return () => {
-      supabase.removeChannel(profilesChannel);
-      supabase.removeChannel(codesChannel);
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
@@ -123,7 +100,7 @@ export default function ReadersAdmin() {
         </div>
       )}
 
-      {loading ? (
+      {loading && readers.length === 0 ? (
         <div className="flex justify-center py-12">
           <Loader2 className="w-5 h-5 animate-spin text-[#555]" />
         </div>

@@ -12,6 +12,14 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   },
 });
 
+export type Profile = {
+  id: string;
+  reader_id: string | null;
+  display_name: string | null;
+  email: string | null;
+  created_at: string;
+};
+
 export type Novel = {
   id: number;
   title: string;
