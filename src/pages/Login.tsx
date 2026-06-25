@@ -78,18 +78,20 @@ export default function Login() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password || !inviteCode.trim()) { setError("请填写所有字段"); return; }
-    if (password.length < 6) { setError("密码至少6位"); return; }
+    if (password.length < 6) { setError("密码至少6位"); setLoading(false); return; }
     setLoading(true); setError(""); setSuccess("");
 
-    const { data: codeRecord } = await supabase
+    // 1. 检查邀请码
+    const { data: codeRecord, error: codeErr } = await supabase
       .from("invite_codes")
       .select("*")
       .eq("code", inviteCode.trim())
       .single();
 
-    if (!codeRecord) { setError("邀请码不存在"); setLoading(false); return; }
+    if (codeErr || !codeRecord) { setError("邀请码不存在"); setLoading(false); return; }
     if (codeRecord.used) { setError("邀请码已被使用"); setLoading(false); return; }
 
+    // 2. 注册账号
     const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -97,24 +99,53 @@ export default function Login() {
 
     if (signUpErr) { setError(signUpErr.message); setLoading(false); return; }
 
-    if (signUpData.user) {
-      await supabase
-        .from("invite_codes")
-        .update({ used: true, used_by: signUpData.user.id, used_at: new Date().toISOString() })
-        .eq("id", codeRecord.id);
-
-      const readerId = generateReaderId();
-      await supabase.from("profiles").upsert({
-        id: signUpData.user.id,
-        reader_id: readerId,
-        display_name: readerId,
-        email: email.trim(),
-        created_at: new Date().toISOString(),
-      });
-
-      setSuccess("注册成功！正在跳转...");
-      setTimeout(() => goDashboard(), 1000);
+    if (!signUpData.user) {
+      setError("注册失败：未获取到用户信息");
+      setLoading(false);
+      return;
     }
+
+    console.log("[Register] 注册成功, userId:", signUpData.user.id);
+
+    // 3. 标记邀请码已使用
+    const { error: updateCodeErr } = await supabase
+      .from("invite_codes")
+      .update({ used: true, used_by: signUpData.user.id, used_at: new Date().toISOString() })
+      .eq("id", codeRecord.id);
+
+    if (updateCodeErr) {
+      console.error("[Register] 更新邀请码失败:", updateCodeErr);
+      setError("邀请码标记失败: " + updateCodeErr.message);
+      setLoading(false);
+      return;
+    }
+
+    // 4. 创建读者 profile（这是关键步骤）
+    const readerId = generateReaderId();
+    const profileData = {
+      id: signUpData.user.id,
+      reader_id: readerId,
+      display_name: readerId,
+      email: email.trim(),
+      created_at: new Date().toISOString(),
+    };
+
+    console.log("[Register] 准备插入 profile:", profileData);
+
+    const { error: profileErr } = await supabase
+      .from("profiles")
+      .insert(profileData);
+
+    if (profileErr) {
+      console.error("[Register] 创建 profile 失败:", profileErr);
+      setError("读者信息创建失败: " + profileErr.message);
+      setLoading(false);
+      return;
+    }
+
+    console.log("[Register] profile 创建成功");
+    setSuccess("注册成功！正在跳转...");
+    setTimeout(() => goDashboard(), 1000);
     setLoading(false);
   };
 
