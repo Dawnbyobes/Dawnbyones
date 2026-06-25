@@ -5,6 +5,13 @@ import { supabase } from "@/lib/supabase";
 
 type Mode = "login" | "register";
 
+function generateReaderId(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let id = "读者";
+  for (let i = 0; i < 4; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
+
 export default function Login() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -95,6 +102,16 @@ export default function Login() {
         .from("invite_codes")
         .update({ used: true, used_by: signUpData.user.id, used_at: new Date().toISOString() })
         .eq("id", codeRecord.id);
+
+      const readerId = generateReaderId();
+      await supabase.from("profiles").upsert({
+        id: signUpData.user.id,
+        reader_id: readerId,
+        display_name: readerId,
+        email: email.trim(),
+        created_at: new Date().toISOString(),
+      });
+
       setSuccess("注册成功！正在跳转...");
       setTimeout(() => goDashboard(), 1000);
     }
