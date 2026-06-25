@@ -58,6 +58,8 @@ export default function Read() {
 
   useEffect(() => {
     if (!authChecked || !chapterId) return;
+    window.scrollTo(0, 0);
+    setShowSet(false); setShowCmt(false); setShowTOC(false);
     supabase.from("chapters").select("*").eq("id", chapterId).single().then(({ data: ch }) => {
       if (!ch) return;
       setChapter(ch);
