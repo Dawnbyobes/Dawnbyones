@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, FileText, Users, MessageSquare, Key, BarChart3, Plus, Edit, Trash2, Loader2, Check, Volume2, Megaphone, Eye, EyeOff } from "lucide-react";
+import { BookOpen, FileText, Users, Key, BarChart3, Plus, Edit, Trash2, Loader2, Check, Volume2, Megaphone, Eye, EyeOff } from "lucide-react";
 import { supabase, type Novel, type Chapter, type InviteCode, type Announcement } from "@/lib/supabase";
-import CommentsAdmin from "./admin/CommentsAdmin";
 import ReadersAdmin from "./admin/ReadersAdmin";
 
-type Tab = "dashboard" | "novels" | "chapters" | "announcements" | "comments" | "readers" | "invites";
+type Tab = "dashboard" | "novels" | "chapters" | "announcements" | "readers" | "invites";
 
 export default function Admin() {
   const [user, setUser] = useState<any>(null);
@@ -33,7 +32,6 @@ export default function Admin() {
     { key: "novels" as Tab, label: "作品", icon: <BookOpen className="w-4 h-4" /> },
     { key: "chapters" as Tab, label: "章节", icon: <FileText className="w-4 h-4" /> },
     { key: "announcements" as Tab, label: "公告", icon: <Megaphone className="w-4 h-4" /> },
-    { key: "comments" as Tab, label: "评论", icon: <MessageSquare className="w-4 h-4" /> },
     { key: "readers" as Tab, label: "读者", icon: <Users className="w-4 h-4" /> },
     { key: "invites" as Tab, label: "邀请码", icon: <Key className="w-4 h-4" /> },
   ];
@@ -51,7 +49,6 @@ export default function Admin() {
       {tab === "novels" && <NovelsAdmin />}
       {tab === "chapters" && <ChaptersAdmin />}
       {tab === "announcements" && <AnnouncementsAdmin />}
-      {tab === "comments" && <CommentsAdmin />}
       {tab === "readers" && <ReadersAdmin />}
       {tab === "invites" && <InvitesAdmin />}
     </div>
@@ -59,13 +56,12 @@ export default function Admin() {
 }
 
 function DashboardTab() {
-  const [stats, setStats] = useState({ novels: 0, chapters: 0, users: 0, comments: 0, announcements: 0 });
+  const [stats, setStats] = useState({ novels: 0, chapters: 0, users: 0, announcements: 0 });
   const [recentCh, setRecentCh] = useState<any[]>([]);
 
   useEffect(() => {
     supabase.from("novels").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, novels: count ?? 0 })));
     supabase.from("chapters").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, chapters: count ?? 0 })));
-    supabase.from("comments").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, comments: count ?? 0 })));
     supabase.from("profiles").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, users: count ?? 0 })));
     supabase.from("announcements").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, announcements: count ?? 0 })));
     supabase.from("chapters").select("*, novels(title)").order("created_at", { ascending: false }).limit(5).then(({ data }) => { if (data) setRecentCh(data); });
@@ -73,8 +69,8 @@ function DashboardTab() {
 
   return (
     <div>
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
-        {[{label:"作品",icon:<BookOpen className="w-4 h-4 text-[#555]"/>,v:stats.novels},{label:"章节",icon:<FileText className="w-4 h-4 text-[#555]"/>,v:stats.chapters},{label:"评论",icon:<MessageSquare className="w-4 h-4 text-[#555]"/>,v:stats.comments},{label:"读者",icon:<Users className="w-4 h-4 text-[#555]"/>,v:stats.users},{label:"公告",icon:<Volume2 className="w-4 h-4 text-[#555]"/>,v:stats.announcements}].map((s,i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        {[{label:"作品",icon:<BookOpen className="w-4 h-4 text-[#555]"/>,v:stats.novels},{label:"章节",icon:<FileText className="w-4 h-4 text-[#555]"/>,v:stats.chapters},{label:"读者",icon:<Users className="w-4 h-4 text-[#555]"/>,v:stats.users},{label:"公告",icon:<Volume2 className="w-4 h-4 text-[#555]"/>,v:stats.announcements}].map((s,i) => (
           <div key={i} className="bg-[#111] border border-[#1a1a1a] rounded-lg p-4"><div className="flex items-center gap-2 mb-2">{s.icon}<span className="text-xs text-[#555]">{s.label}</span></div><p className="text-2xl font-semibold text-white">{s.v}</p></div>
         ))}
       </div>
