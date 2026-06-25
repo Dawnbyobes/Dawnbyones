@@ -9,47 +9,82 @@ const title = "冰箱里的世界";
   <Header mode="public" />
 
   <main>
-    <!-- Hero 区域 -->
+    <!-- Hero 区域 v2 -->
     <div class="hero container">
       <div class="hero-glow"></div>
-      <h1>冰箱里的世界</h1>
-      <p class="hero-desc">只有受邀者才能进入的小世界。</p>
-      <a href="/login" class="btn btn-primary hero-btn">会员制登录</a>
+      <div class="hero-glow-secondary"></div>
+      <div class="hero-content animate-fade-in-up">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          私密会员制阅读空间
+        </div>
+        <h1>冰箱里的世界</h1>
+        <p class="hero-desc">只有受邀者才能进入的小世界。</p>
+        <div class="hero-actions">
+          <a href="/login" class="btn btn-primary hero-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            会员制登录
+          </a>
+          <a href="/register" class="btn btn-secondary hero-btn-secondary">注册账号</a>
+        </div>
+      </div>
     </div>
 
     <div class="divider"></div>
 
-    <!-- 关于区域 -->
+    <!-- 关于区域 v2 -->
     <div class="section container">
       <h2 class="section-title">关于本站</h2>
       <div class="features">
-        <div class="feature">
-          <div class="feature-icon">◉</div>
+        <div class="feature animate-fade-in-up stagger-1">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
           <div class="feature-content">
             <h3>纯粹体验</h3>
             <p>私密阅读，只有你和故事。</p>
           </div>
+          <div class="feature-arrow">→</div>
         </div>
-        <div class="feature">
-          <div class="feature-icon">◉</div>
+        <div class="feature animate-fade-in-up stagger-2">
+          <div class="feature-icon icon-cyan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
           <div class="feature-content">
             <h3>持续更新</h3>
             <p>作者不定期更新章节，敬请期待。</p>
           </div>
+          <div class="feature-arrow">→</div>
         </div>
-        <div class="feature">
-          <div class="feature-icon">◉</div>
+        <div class="feature animate-fade-in-up stagger-3">
+          <div class="feature-icon icon-accent">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
           <div class="feature-content">
             <h3>联系方式</h3>
             <p>不可申请，仅限受邀会员。</p>
           </div>
+          <div class="feature-arrow">→</div>
         </div>
       </div>
     </div>
   </main>
 
   <footer class="container">
-    <p>2026 {title} · 仅供会员阅读</p>
+    <div class="footer-content">
+      <div class="footer-line"></div>
+      <p>2026 {title} · 仅供会员阅读</p>
+    </div>
   </footer>
 </Layout>
 
@@ -63,43 +98,109 @@ const title = "冰箱里的世界";
 
   .hero-glow {
     position: absolute;
-    top: 50%;
+    top: 45%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, rgba(6, 182, 212, 0.05) 40%, transparent 70%);
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, rgba(6, 182, 212, 0.04) 40%, transparent 70%);
     pointer-events: none;
     z-index: 0;
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+
+  .hero-glow-secondary {
+    position: absolute;
+    top: 30%;
+    left: 30%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(10px, -15px); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--accent-pale);
+    border: 1px solid rgba(124, 58, 237, 0.15);
+    border-radius: 100px;
+    font-size: 0.75rem;
+    color: var(--accent-light);
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-glow);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
 
   .hero h1 {
-    position: relative;
-    z-index: 1;
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 700;
     background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-light) 50%, var(--cyan) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 1rem;
-    letter-spacing: -0.02em;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
   }
 
   .hero-desc {
-    position: relative;
-    z-index: 1;
-    font-size: 1rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
     max-width: 480px;
     margin: 0 auto 2.5rem;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
+    line-height: 1.7;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .hero-btn {
-    position: relative;
-    z-index: 1;
-    padding: 1rem 3.5rem;
+    padding: 1rem 2.5rem;
+    font-size: 0.9375rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .hero-btn-secondary {
+    padding: 1rem 2.5rem;
     font-size: 0.9375rem;
   }
 
@@ -115,6 +216,16 @@ const title = "冰箱里的世界";
     text-transform: uppercase;
     letter-spacing: 0.2em;
     margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-title::before {
+    content: '';
+    width: 24px;
+    height: 1.5px;
+    background: linear-gradient(90deg, var(--accent), transparent);
   }
 
   .features {
@@ -125,11 +236,13 @@ const title = "冰箱里的世界";
 
   .feature {
     display: flex;
-    align-items: flex-start;
-    gap: 1.25rem;
-    padding: 1.75rem 0;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.75rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
-    transition: all 0.25s;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--radius);
+    cursor: default;
   }
 
   .feature:last-child {
@@ -137,36 +250,87 @@ const title = "冰箱里的世界";
   }
 
   .feature:hover {
-    padding-left: 0.75rem;
+    background: var(--bg-card);
+    border-color: transparent;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    transform: translateX(8px);
   }
 
   .feature-icon {
-    font-size: 0.625rem;
-    color: var(--accent);
-    margin-top: 0.5rem;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent-dim) 0%, var(--accent) 100%);
+    color: #fff;
+    border-radius: 12px;
     flex-shrink: 0;
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
+
+  .feature-icon.icon-cyan {
+    background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+  }
+
+  .feature-icon.icon-accent {
+    background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+  }
+
+  .feature-content {
+    flex: 1;
+    min-width: 0;
   }
 
   .feature-content h3 {
     font-size: 1.125rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.375rem;
+    letter-spacing: -0.01em;
   }
 
   .feature-content p {
     font-size: 0.875rem;
     color: var(--text-muted);
-    line-height: 1.7;
+    line-height: 1.6;
+  }
+
+  .feature-arrow {
+    color: var(--text-faint);
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  .feature:hover .feature-arrow {
+    opacity: 1;
+    transform: translateX(0);
+    color: var(--accent-light);
   }
 
   /* Footer */
   footer {
     padding: 3rem 0;
+  }
+
+  .footer-content {
     text-align: center;
+  }
+
+  .footer-line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+    margin-bottom: 2rem;
+  }
+
+  footer p {
     font-size: 0.75rem;
     color: var(--text-faint);
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
   }
 
   @media (max-width: 640px) {
@@ -175,12 +339,27 @@ const title = "冰箱里的世界";
     }
 
     .hero h1 {
-      font-size: 2.25rem;
+      font-size: 2.5rem;
     }
 
     .hero-glow {
       width: 300px;
       height: 300px;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero-btn, .hero-btn-secondary {
+      width: 100%;
+      max-width: 280px;
+      justify-content: center;
+    }
+
+    .feature:hover {
+      transform: translateX(4px);
     }
   }
 </style>
