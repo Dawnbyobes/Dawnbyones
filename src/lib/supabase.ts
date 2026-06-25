@@ -67,11 +67,18 @@ export type Admin = {
   created_at: string;
 };
 
-// 修复：与数据库 reading_progress 表的字段保持一致
 export type ReadingProgress = {
   id: string;
   user_id: string;
   chapter_id: string;
   scroll_position: number;
+  updated_at: string;
+};
+
+export type Announcement = {
+  id: string;
+  content: string;
+  active: boolean;
+  created_at: string;
   updated_at: string;
 };
