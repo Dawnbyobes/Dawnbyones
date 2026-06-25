@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { BookOpen, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type Mode = "login" | "register";
 
 export default function Login() {
-  const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,7 +67,6 @@ export default function Login() {
     if (password.length < 6) { setError("密码至少6位"); return; }
     setLoading(true); setError(""); setSuccess("");
 
-    // 1. 验证邀请码
     const { data: codeRecord } = await supabase
       .from("invite_codes")
       .select("*")
@@ -78,7 +76,6 @@ export default function Login() {
     if (!codeRecord) { setError("邀请码不存在"); setLoading(false); return; }
     if (codeRecord.used) { setError("邀请码已被使用"); setLoading(false); return; }
 
-    // 2. 注册账号
     const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -86,23 +83,13 @@ export default function Login() {
 
     if (signUpErr) { setError(signUpErr.message); setLoading(false); return; }
 
-    // 3. 消耗邀请码
     if (signUpData.user) {
-      const { error: updateErr } = await supabase
+      await supabase
         .from("invite_codes")
         .update({ used: true, used_by: signUpData.user.id, used_at: new Date().toISOString() })
         .eq("id", codeRecord.id);
-
-      if (updateErr) {
-        setError("注册成功，但邀请码绑定失败，请联系管理员");
-        setLoading(false);
-        return;
-      }
-
-      setSuccess("注册成功！正在登录...");
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      setSuccess("注册成功！正在刷新...");
+      setTimeout(() => window.location.reload(), 1000);
     }
     setLoading(false);
   };
@@ -119,8 +106,7 @@ export default function Login() {
     const { data: record } = await supabase.from("invite_codes").select("*").eq("code", inviteCode.trim()).single();
     if (!record) { setError("邀请码不存在"); return; }
     if (record.used) { setError("邀请码已被使用"); return; }
-    const { error: updErr } = await supabase.from("invite_codes").update({ used: true, used_by: user.id, used_at: new Date().toISOString() }).eq("id", record.id);
-    if (updErr) { setError("验证失败: " + updErr.message); return; }
+    await supabase.from("invite_codes").update({ used: true, used_by: user.id, used_at: new Date().toISOString() }).eq("id", record.id);
     setSuccess("验证成功！");
     setIsInvited(true);
   };
@@ -129,7 +115,6 @@ export default function Login() {
     return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#555]" /></div>;
   }
 
-  // 已登录但未验证邀请码
   if (user && !isInvited) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
@@ -162,7 +147,6 @@ export default function Login() {
     );
   }
 
-  // 已登录且已验证
   if (user && isInvited) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
@@ -190,7 +174,6 @@ export default function Login() {
     );
   }
 
-  // 未登录 - 显示登录/注册表单
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
@@ -200,7 +183,6 @@ export default function Login() {
         </div>
 
         <div className="bg-[#111] border border-[#1a1a1a] rounded-lg p-6">
-          {/* 登录/注册 切换 */}
           <div className="flex mb-6 border-b border-[#1a1a1a]">
             <button onClick={() => { setMode("login"); setError(""); }}
               className={`flex-1 pb-2.5 text-sm transition-colors ${mode === "login" ? "text-white border-b-2 border-white" : "text-[#555] hover:text-[#888]"}`}>
@@ -247,14 +229,12 @@ export default function Login() {
             </form>
           )}
 
-          {/* 分隔线 */}
           <div className="flex items-center gap-3 my-5">
             <div className="flex-1 h-px bg-[#222]" />
             <span className="text-[#555] text-xs">或</span>
             <div className="flex-1 h-px bg-[#222]" />
           </div>
 
-          {/* Google 登录 */}
           <button onClick={handleOAuth}
             className="w-full py-2.5 border border-[#333] text-[#aaa] rounded-md text-sm font-medium hover:border-[#555] hover:text-white transition-colors">
             使用 Google 登录
