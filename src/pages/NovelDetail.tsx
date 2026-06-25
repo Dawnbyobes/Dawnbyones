@@ -1,16 +1,36 @@
-import { useParams, Link } from "react-router-dom";
-import { BookOpen, ChevronRight } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { BookOpen, ChevronRight, Loader2 } from "lucide-react";
 import { supabase, type Novel, type Chapter } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 
 export default function NovelDetail() {
+  const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    if (!slug) return;
+    // 先检查登录状态
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        navigate("/login");
+        return;
+      }
+      // 检查邀请码验证
+      supabase.from("invite_codes").select("*").eq("used_by", data.user.id).limit(1).then(({ data: codes }) => {
+        if (!codes || codes.length === 0) {
+          navigate("/login");
+          return;
+        }
+        setAuthChecked(true);
+      });
+    });
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!authChecked || !slug) return;
     supabase.from("novels").select("*").eq("slug", slug).single().then(({ data }) => {
       if (data) {
         setNovel(data);
@@ -20,10 +40,14 @@ export default function NovelDetail() {
       }
       setLoading(false);
     });
-  }, [slug]);
+  }, [slug, authChecked]);
+
+  if (!authChecked) {
+    return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#555]" /></div>;
+  }
 
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-12"><div className="animate-pulse space-y-4"><div className="h-8 bg-[#1a1a1a] rounded w-1/2" /><div className="h-4 bg-[#111] rounded w-full" /></div></div>;
-  if (!novel) return <div className="max-w-4xl mx-auto px-4 py-20 text-center"><p className="text-[#555] text-lg mb-4">作品不存在</p><Link to="/novels" className="text-[#888] text-sm hover:text-white transition-colors">返回作品列表</Link></div>;
+  if (!novel) return <div className="max-w-4xl mx-auto px-4 py-20 text-center"><p className="text-[#555] text-lg mb-4">作品不存在</p><Link to="/dashboard" className="text-[#888] text-sm hover:text-white transition-colors">返回书架</Link></div>;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
