@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Settings, MessageSquare, List, X, Send, BookOpen, LogOut, Loader2, Trash2 } from "lucide-react";
-import { supabase, type Chapter, type Novel, type Comment } from "@/lib/supabase";
+import { ChevronLeft, ChevronRight, Settings, List, X, BookOpen, LogOut, Loader2 } from "lucide-react";
+import { supabase, type Chapter, type Novel } from "@/lib/supabase";
 
 type Theme = "dark" | "light" | "sepia" | "green";
 type Font = "sans" | "serif" | "kai";
@@ -25,7 +25,6 @@ export default function Read() {
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [novel, setNovel] = useState<Novel | null>(null);
   const [allChapters, setAllChapters] = useState<Pick<Chapter, "id" | "title" | "order_num">[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [user, setUser] = useState<any>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem("rt") as Theme) ?? "dark");
@@ -33,10 +32,7 @@ export default function Read() {
   const [fontSize, setFontSize] = useState(() => parseFloat(localStorage.getItem("rfs") ?? "1.125"));
   const [lineHeight, setLineHeight] = useState(() => parseFloat(localStorage.getItem("rlh") ?? "2"));
   const [showSet, setShowSet] = useState(false);
-  const [showCmt, setShowCmt] = useState(false);
   const [showTOC, setShowTOC] = useState(false);
-  const [cmtText, setCmtText] = useState("");
-  const [cmtError, setCmtError] = useState("");
   const [currentIdx, setCurrentIdx] = useState(0);
   const c = TC[theme];
 
@@ -59,7 +55,7 @@ export default function Read() {
   useEffect(() => {
     if (!authChecked || !chapterId) return;
     window.scrollTo(0, 0);
-    setShowSet(false); setShowCmt(false); setShowTOC(false);
+    setShowSet(false); setShowTOC(false);
     supabase.from("chapters").select("*").eq("id", chapterId).single().then(({ data: ch }) => {
       if (!ch) return;
       setChapter(ch);
@@ -68,14 +64,9 @@ export default function Read() {
       supabase.from("chapters").select("id,title,order_num").eq("novel_id", ch.novel_id).eq("status", "published").order("order_num").then(({ data: chs }) => {
         if (chs) { setAllChapters(chs); setCurrentIdx(chs.findIndex(x => x.id === chapterId)); }
       });
-      loadComments(chapterId);
     });
     return () => { document.title = "冰箱里的世界"; };
   }, [chapterId, authChecked]);
-
-  const loadComments = (cid: string) => {
-    supabase.from("comments").select("*").eq("chapter_id", cid).order("created_at", { ascending: false }).then(({ data: cms }) => { if (cms) setComments(cms); });
-  };
 
   const prev = currentIdx > 0 ? allChapters[currentIdx - 1] : null;
   const next = currentIdx < allChapters.length - 1 ? allChapters[currentIdx + 1] : null;
@@ -87,26 +78,6 @@ export default function Read() {
     window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h);
   }, [goPrev, goNext]);
 
-  const sendCmt = async () => {
-    if (!cmtText.trim() || !user || !chapterId) return;
-    setCmtError("");
-    const { data: profile } = await supabase.from("profiles").select("reader_id").eq("id", user.id).single();
-    const displayName = profile?.reader_id ?? (user.email ? user.email.split("@")[0] : "匿名");
-    const { error: insErr } = await supabase.from("comments").insert({
-      chapter_id: chapterId, user_id: user.id,
-      user_name: displayName, content: cmtText.trim(),
-    });
-    if (insErr) { setCmtError("发送失败: " + insErr.message); return; }
-    setCmtText(""); loadComments(chapterId);
-  };
-
-  const deleteCmt = async (cmtId: string, cmtUserId: string) => {
-    if (!user || user.id !== cmtUserId) return;
-    if (!confirm("确定删除这条评论？")) return;
-    await supabase.from("comments").delete().eq("id", cmtId);
-    if (chapterId) loadComments(chapterId);
-  };
-
   if (!authChecked) return <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]"><Loader2 className="w-5 h-5 animate-spin text-[#555]" /></div>;
   if (!chapter) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: c.bg }}><div className="animate-pulse text-[#555]">加载中...</div></div>;
   const paragraphs = chapter.content.split("\n").filter(p => p.trim());
@@ -117,12 +88,8 @@ export default function Read() {
         <div className="max-w-2xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link to={`/novel/${novel?.slug ?? ""}`} className="text-sm flex items-center gap-1 transition-colors" style={{ color: c.nav }} onMouseEnter={e => e.currentTarget.style.color = c.navHover} onMouseLeave={e => e.currentTarget.style.color = c.nav}><ChevronLeft className="w-4 h-4" /><span className="hidden sm:inline">{novel?.title ?? "目录"}</span></Link>
           <div className="flex items-center gap-2">
-            <button onClick={() => { setShowTOC(true); setShowSet(false); setShowCmt(false); }} className="p-2 rounded-md transition-colors" style={{ color: c.nav }} title="目录"><List className="w-4 h-4" /></button>
-            <button onClick={() => { setShowCmt(!showCmt); setShowSet(false); setShowTOC(false); }} className="p-2 rounded-md transition-colors relative" style={{ color: c.nav }} title="评论">
-              <MessageSquare className="w-4 h-4" />
-              {comments.length > 0 && <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-white text-[#0a0a0a] text-[10px] rounded-full flex items-center justify-center font-medium">{comments.length}</span>}
-            </button>
-            <button onClick={() => { setShowSet(!showSet); setShowCmt(false); setShowTOC(false); }} className="p-2 rounded-md transition-colors" style={{ color: c.nav }} title="设置"><Settings className="w-4 h-4" /></button>
+            <button onClick={() => { setShowTOC(true); setShowSet(false); }} className="p-2 rounded-md transition-colors" style={{ color: c.nav }} title="目录"><List className="w-4 h-4" /></button>
+            <button onClick={() => { setShowSet(!showSet); setShowTOC(false); }} className="p-2 rounded-md transition-colors" style={{ color: c.nav }} title="设置"><Settings className="w-4 h-4" /></button>
             {user ? <button onClick={() => supabase.auth.signOut().then(() => window.location.reload())} className="p-2 rounded-md transition-colors" style={{ color: c.nav }} title="退出"><LogOut className="w-4 h-4" /></button>
               : <Link to="/login" className="p-2 rounded-md transition-colors" style={{ color: c.nav }} title="登录"><BookOpen className="w-4 h-4" /></Link>}
           </div>
@@ -145,38 +112,6 @@ export default function Read() {
             <div className="space-y-0.5">{allChapters.map(ch => <Link key={ch.id} to={`/read/${ch.id}`} onClick={() => setShowTOC(false)} className="block py-2 px-3 rounded text-xs transition-colors" style={{ color: ch.id===chapterId?c.heading:c.nav, backgroundColor: ch.id===chapterId?"rgba(255,255,255,0.05)":"transparent" }}>第{ch.order_num}章 · {ch.title}</Link>)}</div>
           </div>
           <div className="flex-1" />
-        </div>
-      )}
-      {showCmt && (
-        <div className="fixed right-0 top-0 bottom-0 w-80 max-w-[80vw] z-50 border-l overflow-y-auto" style={{ backgroundColor: c.panel, borderColor: c.border }}>
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4"><h3 className="text-sm font-medium" style={{ color: c.heading }}>评论 ({comments.length})</h3><button onClick={() => setShowCmt(false)} className="p-1" style={{ color: c.nav }}><X className="w-4 h-4" /></button></div>
-            {user && (
-              <div className="mb-4">
-                <textarea value={cmtText} onChange={e => { setCmtText(e.target.value); setCmtError(""); }} placeholder="写下你的想法..." className="w-full rounded-md border p-2.5 text-sm resize-none focus:outline-none" style={{ backgroundColor: c.bg, borderColor: c.border, color: c.text }} rows={3} />
-                {cmtError && <p className="text-[#c44444] text-xs mt-1.5">{cmtError}</p>}
-                <button onClick={sendCmt} disabled={!cmtText.trim()} className="mt-2 w-full py-2 bg-white text-[#0a0a0a] rounded-md text-xs font-medium hover:opacity-85 transition-opacity disabled:opacity-40 flex items-center justify-center gap-1"><Send className="w-3 h-3" />发送</button>
-              </div>
-            )}
-            <div className="space-y-3">
-              {comments.length > 0 ? comments.map(cm => (
-                <div key={cm.id} className="py-3 border-b" style={{ borderColor: c.border }}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium" style={{ color: c.heading }}>{cm.user_name}</span>
-                      <span className="text-[10px]" style={{ color: c.nav }}>{new Date(cm.created_at).toLocaleDateString("zh-CN")}</span>
-                    </div>
-                    {user && user.id === cm.user_id && (
-                      <button onClick={() => deleteCmt(cm.id, cm.user_id)} className="p-1 text-[#555] hover:text-[#c44444] transition-colors" title="删除">
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-sm leading-relaxed" style={{ color: c.text }}>{cm.content}</p>
-                </div>
-              )) : <p className="text-center text-xs py-8" style={{ color: c.nav }}>暂无评论</p>}
-            </div>
-          </div>
         </div>
       )}
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
