@@ -24,17 +24,12 @@
     --input: 0 0% 13%;
     --ring: 0 0% 27%;
   }
-
   body {
-    @apply bg-[#0a0a0a] text-[#e5e5e5];
+    background-color: #0a0a0a;
+    color: #e5e5e5;
     font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
     line-height: 1.8;
     min-height: 100vh;
   }
-
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 }
