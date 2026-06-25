@@ -78,19 +78,23 @@ export async function getProfile() {
     .from('profiles')
     .select('*')
     .single();
-  
+
   if (error) return null;
   return data;
 }
 
-// 更新用户资料
+// 更新用户资料 - 修复：添加 user.id 作为 WHERE 条件
 export async function updateProfile(updates) {
+  const user = await getUser();
+  if (!user) return { data: null, error: new Error('未登录') };
+
   const { data, error } = await supabase
     .from('profiles')
     .update(updates)
+    .eq('id', user.id)
     .select()
     .single();
-  
+
   return { data, error };
 }
 
@@ -100,11 +104,11 @@ export async function getChapters(novelId = null) {
     .from('chapters')
     .select('*')
     .order('order_num', { ascending: true });
-  
+
   if (novelId) {
     query = query.eq('novel_id', novelId);
   }
-  
+
   const { data, error } = await query;
   return { data: data || [], error };
 }
@@ -116,7 +120,7 @@ export async function getChapter(chapterId) {
     .select('*')
     .eq('id', chapterId)
     .single();
-  
+
   return { data, error };
 }
 
@@ -134,18 +138,18 @@ export async function getComments(chapterId) {
     .select('*')
     .eq('chapter_id', chapterId)
     .order('created_at', { ascending: false });
-  
+
   return { data: data || [], error };
 }
 
 export async function addComment(chapterId, content) {
   const user = await getUser();
   if (!user) return { data: null, error: new Error('未登录') };
-  
+
   // 获取 reader_id
   const profile = await getProfile();
   const readerId = profile?.reader_id || '匿名读者';
-  
+
   const { data, error } = await supabase
     .from('comments')
     .insert([{
@@ -155,7 +159,7 @@ export async function addComment(chapterId, content) {
     }])
     .select()
     .single();
-  
+
   return { data, error };
 }
 
@@ -164,7 +168,17 @@ export async function deleteComment(commentId) {
     .from('comments')
     .delete()
     .eq('id', commentId);
-  
+
+  return { error };
+}
+
+// 管理员删除评论
+export async function adminDeleteComment(commentId) {
+  const { error } = await supabase
+    .from('comments')
+    .delete()
+    .eq('id', commentId);
+
   return { error };
 }
 
@@ -191,7 +205,7 @@ export async function getBookmarks() {
     .from('bookmarks')
     .select('*, chapters(*)')
     .order('created_at', { ascending: false });
-  
+
   return { data: data || [], error };
 }
 
@@ -201,16 +215,55 @@ export async function addBookmark(chapterId, note = '') {
     .insert([{ chapter_id: chapterId, note }])
     .select()
     .single();
-  
+
   return { data, error };
 }
 
-export async function removeBookmark(chapterId) {
+export async function removeBookmark(bookmarkId) {
   const { error } = await supabase
     .from('bookmarks')
     .delete()
-    .eq('chapter_id', chapterId);
-  
+    .eq('id', bookmarkId);
+
+  return { error };
+}
+
+// 切换书签状态（新增）
+export async function toggleBookmark(chapterId) {
+  const { data: bookmarks } = await getBookmarks();
+  const existing = (bookmarks || []).find(b => b.chapter_id === chapterId);
+
+  if (existing) {
+    await removeBookmark(existing.id);
+    return { bookmarked: false };
+  } else {
+    await addBookmark(chapterId);
+    return { bookmarked: true };
+  }
+}
+
+// 邀请码相关
+export async function checkInviteCode(code) {
+  const { data, error } = await supabase
+    .from('invite_codes')
+    .select('*')
+    .eq('code', code)
+    .eq('used', false)
+    .single();
+
+  return { valid: !!data && !error, data, error };
+}
+
+export async function consumeInviteCode(code, email) {
+  const { error } = await supabase
+    .from('invite_codes')
+    .update({
+      used: true,
+      used_by: email,
+      used_at: new Date().toISOString(),
+    })
+    .eq('code', code);
+
   return { error };
 }
 
