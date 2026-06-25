@@ -120,13 +120,12 @@ export default function Login() {
       return;
     }
 
-    // 4. 创建读者 profile（这是关键步骤）
+    // 4. 创建读者 profile（只插入数据库存在的列）
     const readerId = generateReaderId();
     const profileData = {
       id: signUpData.user.id,
       reader_id: readerId,
       display_name: readerId,
-      email: email.trim(),
       created_at: new Date().toISOString(),
     };
 
