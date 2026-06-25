@@ -117,7 +117,7 @@ export default function ChaptersAdmin() {
   };
 
   const handleConfirmImport = async () => {
-    if (!selNovel || importPreview.length === 0) return;
+    if (!selNovel || importPreview.length === 0 || !sel) return;
     if (!confirm(`确认导入 ${importPreview.length} 章到《${sel.title}》？`)) return;
 
     setImportLoading(true);
