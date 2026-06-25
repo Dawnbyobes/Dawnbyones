@@ -2,70 +2,31 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="登录 - 冰箱里的世界">
+<Layout title="登录">
   <div class="auth-page">
-    <div class="auth-glow"></div>
-    <div class="auth-glow-secondary"></div>
-    <div class="auth-box animate-fade-in-up">
-      <a href="/" class="back-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.375rem;">
-          <line x1="19" y1="12" x2="5" y2="12"/>
-          <polyline points="12 19 5 12 12 5"/>
-        </svg>
-        返回首页
-      </a>
-
-      <div class="auth-header">
-        <div class="auth-logo">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
-          </svg>
-        </div>
-        <h1>会员登录</h1>
-        <p class="subtitle">欢迎回来，继续你的阅读之旅</p>
-      </div>
+    <div class="auth-box">
+      <a href="/" class="back-link">返回首页</a>
+      <h1>登录</h1>
+      <p class="subtitle">会员制阅读空间</p>
 
       <form id="loginForm">
-        <div class="form-group">
-          <label for="email">邮箱</label>
-          <input type="email" id="email" placeholder="your@email.com" required autocomplete="email" />
-        </div>
-        <div class="form-group">
-          <label for="password">密码</label>
-          <input type="password" id="password" placeholder="输入密码" required autocomplete="current-password" />
-        </div>
-        <button type="submit" class="btn btn-primary submit-btn" id="submitBtn">
-          <span class="btn-text">登录</span>
-        </button>
+        <input type="email" id="email" placeholder="邮箱" required autocomplete="email" />
+        <input type="password" id="password" placeholder="密码" required autocomplete="current-password" />
+        <button type="submit" class="btn btn-primary" id="submitBtn">登录</button>
       </form>
 
       <div class="message" id="message"></div>
 
       <div class="auth-links">
-        <a href="/" class="auth-link">首页</a>
-        <span class="link-divider"></span>
-        <a href="/register" class="auth-link">注册账号</a>
-        <span class="link-divider"></span>
-        <a href="#" class="auth-link" id="forgotLink">忘记密码</a>
+        <a href="/register">注册账号</a>
+        <a href="#" id="forgotLink">忘记密码</a>
       </div>
 
-      <form id="resetForm" style="display:none; margin-top:2rem;">
-        <div class="reset-section">
-          <div class="reset-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-          </div>
-          <p class="reset-desc">输入你的邮箱，我们将发送密码重置链接。</p>
-          <div class="form-group">
-            <input type="email" id="resetEmail" placeholder="your@email.com" required />
-          </div>
-          <button type="submit" class="btn btn-secondary submit-btn" id="resetBtn">发送重置链接</button>
-          <button type="button" class="btn btn-text" id="cancelReset">返回登录</button>
-        </div>
+      <form id="resetForm" style="display:none; margin-top:24px;">
+        <p class="reset-hint">输入邮箱，我们将发送重置链接。</p>
+        <input type="email" id="resetEmail" placeholder="邮箱" required />
+        <button type="submit" class="btn btn-secondary" id="resetBtn">发送</button>
+        <button type="button" class="btn-text" id="cancelReset">取消</button>
       </form>
     </div>
   </div>
@@ -82,21 +43,31 @@ import Layout from '../layouts/Layout.astro';
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     btn.disabled = true;
-    btn.querySelector('.btn-text').textContent = '登录中...';
+    btn.textContent = '登录中...';
     msg.innerHTML = '';
     const { data, error } = await signIn(document.getElementById('email').value.trim(), document.getElementById('password').value);
-    if (error) { msg.innerHTML = `<p class="error">${error.message}</p>`; btn.disabled = false; btn.querySelector('.btn-text').textContent = '登录'; return; }
+    if (error) { msg.innerHTML = `<p class="error">${error.message}</p>`; btn.disabled = false; btn.textContent = '登录'; return; }
     localStorage.setItem('sb_token', data.session.access_token);
-    showToast('登录成功，正在跳转...');
-    setTimeout(() => window.location.href = '/novels', 800);
+    showToast('登录成功');
+    setTimeout(() => window.location.href = '/novels', 600);
   });
 
   const forgotLink = document.getElementById('forgotLink');
   const resetForm = document.getElementById('resetForm');
   const cancelReset = document.getElementById('cancelReset');
 
-  forgotLink?.addEventListener('click', (e) => { e.preventDefault(); form.style.display = 'none'; resetForm.style.display = 'block'; forgotLink.style.display = 'none'; document.querySelector('.auth-links').style.display = 'none'; });
-  cancelReset?.addEventListener('click', () => { form.style.display = 'block'; resetForm.style.display = 'none'; forgotLink.style.display = ''; document.querySelector('.auth-links').style.display = 'flex'; document.getElementById('resetEmail').value = ''; });
+  forgotLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    form.style.display = 'none';
+    document.querySelector('.auth-links').style.display = 'none';
+    resetForm.style.display = 'block';
+  });
+  cancelReset?.addEventListener('click', () => {
+    form.style.display = 'block';
+    document.querySelector('.auth-links').style.display = 'flex';
+    resetForm.style.display = 'none';
+    document.getElementById('resetEmail').value = '';
+  });
 
   resetForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -104,11 +75,9 @@ import Layout from '../layouts/Layout.astro';
     resetBtn.disabled = true;
     resetBtn.textContent = '发送中...';
     const { error } = await resetPassword(document.getElementById('resetEmail').value.trim());
-    if (error) { showToast(error.message, 'error'); resetBtn.disabled = false; resetBtn.textContent = '发送重置链接'; return; }
-    showToast('重置链接已发送到邮箱，请查收');
-    resetBtn.disabled = false;
-    resetBtn.textContent = '发送重置链接';
-    setTimeout(() => cancelReset.click(), 2000);
+    if (error) { showToast(error.message, 'error'); resetBtn.disabled = false; resetBtn.textContent = '发送'; return; }
+    showToast('重置链接已发送');
+    setTimeout(() => cancelReset.click(), 1500);
   });
 </script>
 
@@ -118,187 +87,54 @@ import Layout from '../layouts/Layout.astro';
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    padding: 2rem 1rem;
+    padding: 24px;
   }
-
-  .auth-glow {
-    position: absolute;
-    top: 25%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, rgba(6, 182, 212, 0.03) 40%, transparent 65%);
-    pointer-events: none;
-    animation: pulse-glow 5s ease-in-out infinite;
-  }
-
-  .auth-glow-secondary {
-    position: absolute;
-    bottom: 10%;
-    right: 15%;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(6, 182, 212, 0.04) 0%, transparent 70%);
-    pointer-events: none;
-    animation: float 7s ease-in-out infinite;
-  }
-
   .auth-box {
     width: 100%;
-    max-width: 420px;
-    padding: 2rem;
-    position: relative;
-    z-index: 1;
+    max-width: 360px;
   }
-
   .back-link {
-    display: inline-flex;
-    align-items: center;
-    color: var(--text-dim);
-    text-decoration: none;
-    font-size: 0.8125rem;
-    margin-bottom: 2.5rem;
-    transition: all 0.3s ease;
-  }
-
-  .back-link:hover {
-    color: var(--accent-light);
-    text-shadow: 0 0 8px var(--accent-glow);
-  }
-
-  .auth-header {
-    text-align: center;
-    margin-bottom: 2.5rem;
-  }
-
-  .auth-logo {
-    width: 56px;
-    height: 56px;
-    margin: 0 auto 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
-    color: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px var(--accent-glow);
-  }
-
-  .auth-header h1 {
-    font-size: 1.625rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-    letter-spacing: -0.02em;
-  }
-
-  .subtitle {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    letter-spacing: 0.02em;
-  }
-
-  .form-group {
-    margin-bottom: 1rem;
-  }
-
-  .form-group label {
     display: block;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-    letter-spacing: 0.02em;
-  }
-
-  .submit-btn {
-    width: 100%;
-    margin-top: 0.75rem;
-    padding: 1rem;
-    font-size: 0.9375rem;
-  }
-
-  .auth-links {
-    margin-top: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    font-size: 0.8125rem;
-  }
-
-  .auth-link {
-    color: var(--text-dim);
+    color: var(--text-tertiary);
     text-decoration: none;
-    transition: all 0.3s ease;
-    padding: 0.25rem 0.5rem;
+    font-size: 13px;
+    margin-bottom: 40px;
+    transition: color 0.2s;
   }
-
-  .auth-link:hover {
-    color: var(--accent-light);
-    text-shadow: 0 0 8px var(--accent-glow);
+  .back-link:hover { color: var(--text); }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
   }
-
-  .link-divider {
-    width: 4px;
-    height: 4px;
-    background: var(--text-faint);
-    border-radius: 50%;
+  .subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
   }
-
-  .reset-section {
-    text-align: center;
-    padding: 1.5rem;
-    background: var(--bg-card);
-    border: 1.5px solid var(--border-color);
-    border-radius: var(--radius-lg);
+  form input {
+    margin-bottom: 10px;
   }
-
-  .reset-icon {
-    width: 44px;
-    height: 44px;
-    margin: 0 auto 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--accent-pale);
-    border-radius: 12px;
-    color: var(--accent-light);
-  }
-
-  .reset-desc {
-    color: var(--text-muted);
-    font-size: 0.875rem;
-    margin-bottom: 1.25rem;
-    line-height: 1.6;
-  }
-
-  .btn-text {
-    background: none;
-    border: none;
-    color: var(--text-dim);
-    font-family: inherit;
-    font-size: 0.8125rem;
-    cursor: pointer;
-    padding: 0.75rem;
-    margin-top: 0.5rem;
-    transition: all 0.3s ease;
+  form .btn {
     width: 100%;
+    margin-top: 6px;
   }
-
-  .btn-text:hover {
-    color: var(--accent-light);
+  .auth-links {
+    margin-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
   }
-
-  @keyframes pulse-glow {
-    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
-    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  .auth-links a {
+    color: var(--text-tertiary);
+    text-decoration: none;
+    transition: color 0.2s;
   }
-
-  @keyframes float {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(8px, -12px); }
+  .auth-links a:hover { color: var(--text); }
+  .reset-hint {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
   }
 </style>
