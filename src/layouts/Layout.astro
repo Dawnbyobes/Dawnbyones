@@ -1,5 +1,5 @@
 ---
-// Layout 组件 - 页面公共骨架
+// Layout 组件 - 页面公共骨架 v2
 
 interface Props {
   title: string;
@@ -24,13 +24,61 @@ const {
     <meta name="theme-color" content="#0a0a0a" />
     <title>{title}</title>
     <link rel="stylesheet" href="/src/styles/global.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <script>
       const theme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', theme);
     </script>
   </head>
   <body>
-    <slot />
+    <div class="page-wrapper">
+      <div class="ambient-glow"></div>
+      <slot />
+    </div>
     <div class="toast-container"></div>
   </body>
 </html>
+
+<style is:global>
+  .page-wrapper {
+    position: relative;
+    min-height: 100vh;
+  }
+
+  .ambient-glow {
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(124, 58, 237, 0.04) 0%,
+      rgba(6, 182, 212, 0.02) 40%,
+      transparent 70%
+    );
+    pointer-events: none;
+    z-index: 0;
+    animation: ambientPulse 8s ease-in-out infinite;
+  }
+
+  @keyframes ambientPulse {
+    0%, 100% {
+      opacity: 0.6;
+      transform: translateX(-50%) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translateX(-50%) scale(1.1);
+    }
+  }
+
+  /* Stagger animation helper */
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
+  .stagger-5 { animation-delay: 0.5s; }
+</style>
