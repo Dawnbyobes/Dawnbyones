@@ -60,6 +60,8 @@ function Dashboard() {
     supabase.from("novels").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, novels: count ?? 0 })));
     supabase.from("chapters").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, chapters: count ?? 0 })));
     supabase.from("comments").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, comments: count ?? 0 })));
+    // 修复：添加读者数量统计
+    supabase.from("profiles").select("*", { count: "exact", head: true }).then(({ count }) => setStats(s => ({ ...s, users: count ?? 0 })));
     supabase.from("chapters").select("*, novels(title)").order("created_at", { ascending: false }).limit(5).then(({ data }) => { if (data) setRecentCh(data); });
   }, []);
 
@@ -92,10 +94,12 @@ function NovelsAdmin() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.slug) return;
+    const now = new Date().toISOString();
     if (editing) {
-      await supabase.from("novels").update(form).eq("id", editing.id);
+      // 修复：更新时包含 updated_at 字段
+      await supabase.from("novels").update({ ...form, updated_at: now }).eq("id", editing.id);
     } else {
-      await supabase.from("novels").insert(form);
+      await supabase.from("novels").insert({ ...form, word_count: 0, chapter_count: 0, is_published: false, updated_at: now });
     }
     reset(); setShowForm(false); load();
   };
@@ -153,11 +157,13 @@ function ChaptersAdmin() {
     e.preventDefault();
     if (!form.title || !form.content || !selNovel) return;
     const wordCount = form.content.length;
+    const now = new Date().toISOString();
     if (editing) {
-      await supabase.from("chapters").update({ title: form.title, order_num: form.order_num, content: form.content, status: form.status, word_count: wordCount }).eq("id", editing.id);
+      // 修复：更新时包含 updated_at 字段
+      await supabase.from("chapters").update({ title: form.title, order_num: form.order_num, content: form.content, status: form.status, word_count: wordCount, updated_at: now }).eq("id", editing.id);
     } else {
       const id = crypto.randomUUID();
-      await supabase.from("chapters").insert({ id, novel_id: selNovel, title: form.title, order_num: form.order_num, content: form.content, status: form.status, word_count: wordCount });
+      await supabase.from("chapters").insert({ id, novel_id: selNovel, title: form.title, order_num: form.order_num, content: form.content, status: form.status, word_count: wordCount, updated_at: now });
     }
     setShowForm(false); setEditing(null); setForm({ novel_id: 0, title: "", order_num: 1, content: "", status: "published" }); loadCh();
   };
@@ -188,25 +194,34 @@ function ChaptersAdmin() {
   );
 }
 
+// 修复：ReadersAdmin 现在显示真正的读者列表
 function ReadersAdmin() {
+  const [profiles, setProfiles] = useState<any[]>([]);
   const [codes, setCodes] = useState<InviteCode[]>([]);
 
-  useEffect(() => { supabase.from("invite_codes").select("*").order("created_at", { ascending: false }).then(({ data }) => { if (data) setCodes(data); }); }, []);
+  useEffect(() => {
+    supabase.from("profiles").select("*").order("created_at", { ascending: false }).then(({ data }) => { if (data) setProfiles(data); });
+    supabase.from("invite_codes").select("*").order("created_at", { ascending: false }).then(({ data }) => { if (data) setCodes(data); });
+  }, []);
 
   return (
     <div>
       <div className="flex gap-4 mb-6">
-        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">总邀请码</p><p className="text-xl font-semibold text-white">{codes.length}</p></div>
-        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">已使用</p><p className="text-xl font-semibold text-white">{codes.filter(c => c.used).length}</p></div>
-        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">未使用</p><p className="text-xl font-semibold text-white">{codes.filter(c => !c.used).length}</p></div>
+        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">总读者</p><p className="text-xl font-semibold text-white">{profiles.length}</p></div>
+        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">已用邀请码</p><p className="text-xl font-semibold text-white">{codes.filter(c => c.used).length}</p></div>
+        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">剩余邀请码</p><p className="text-xl font-semibold text-white">{codes.filter(c => !c.used).length}</p></div>
       </div>
+      <h3 className="text-sm font-medium text-white mb-4">读者列表</h3>
       <div className="space-y-2">
-        {codes.map(code => <div key={code.id} className={`flex items-center justify-between py-3 px-4 border rounded-lg ${code.used ? "bg-[#0a0a0a] border-[#111] opacity-60" : "bg-[#111] border-[#1a1a1a]"}`}>
-          <div className="flex items-center gap-3 min-w-0 flex-1">{code.used ? <Check className="w-4 h-4 text-[#4caa4c] flex-shrink-0" /> : <Key className="w-4 h-4 text-[#555] flex-shrink-0" />}<div className="min-w-0"><p className="text-sm font-mono" style={{ color: code.used ? "#555" : "#aaa" }}>{code.code}</p>{code.note && <p className="text-[#555] text-xs">{code.note}</p>}</div></div>
-          {code.used && code.used_at && <span className="text-[#555] text-xs">{new Date(code.used_at).toLocaleDateString("zh-CN")}</span>}
+        {profiles.map(p => <div key={p.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg">
+          <div className="min-w-0 flex-1">
+            <p className="text-white text-sm font-medium truncate">{p.display_name ?? "未命名读者"}</p>
+            <p className="text-[#555] text-xs">ID: {p.reader_id}</p>
+          </div>
+          <span className="text-[#444] text-xs flex-shrink-0">{new Date(p.created_at).toLocaleDateString("zh-CN")}</span>
         </div>)}
       </div>
-      {codes.length === 0 && <div className="text-center py-12 text-[#555] text-sm">暂无邀请码</div>}
+      {profiles.length === 0 && <div className="text-center py-12 text-[#555] text-sm">暂无读者</div>}
     </div>
   );
 }
