@@ -1,12 +1,12 @@
-import { Routes, Route } from 'react-router-dom'
-import Layout from './components/Layout'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import Novels from './pages/Novels'
-import NovelDetail from './pages/NovelDetail'
-import Read from './pages/Read'
-import Admin from './pages/Admin'
-import NotFound from './pages/NotFound'
+import { Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Novels from "./pages/Novels";
+import NovelDetail from "./pages/NovelDetail";
+import Read from "./pages/Read";
+import Admin from "./pages/Admin";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (
@@ -21,5 +21,5 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
-  )
+  );
 }
