@@ -5,121 +5,76 @@ import ReaderHeader from '../components/ReaderHeader.astro';
 const chapterId = Astro.url.searchParams.get('id');
 ---
 
-<Layout title="阅读 - 冰箱里的世界">
+<Layout title="阅读">
   <ReaderHeader />
 
   <main class="container-reader" id="readerMain">
-    <!-- 阅读工具栏 -->
-    <div class="reader-toolbar animate-fade-in-up">
+    <div class="toolbar">
       <div class="toolbar-group">
         <label>字号</label>
         <div class="btn-group">
-          <button class="btn-tune" data-font="-0.125" title="减小字号">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
-          <button class="btn-tune" data-font="+0.125" title="增大字号">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
+          <button class="btn-tune" data-font="-0.125">-</button>
+          <button class="btn-tune" data-font="+0.125">+</button>
         </div>
       </div>
       <div class="toolbar-group">
         <label>行距</label>
         <div class="btn-group">
-          <button class="btn-tune" data-line="-0.2" title="减小行距">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          </button>
-          <button class="btn-tune" data-line="+0.2" title="增大行距">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="5" x2="21" y2="5"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="19" x2="21" y2="19"/></svg>
-          </button>
+          <button class="btn-tune" data-line="-0.2">窄</button>
+          <button class="btn-tune" data-line="+0.2">宽</button>
         </div>
       </div>
       <div class="toolbar-group">
         <label>字体</label>
         <div class="btn-group">
-          <button class="btn-tune" data-font-family="serif">宋体</button>
-          <button class="btn-tune" data-font-family="sans">黑体</button>
+          <button class="btn-tune" data-font-family="serif">宋</button>
+          <button class="btn-tune" data-font-family="sans">黑</button>
         </div>
       </div>
       <div class="toolbar-group">
-        <label>页宽</label>
+        <label>宽度</label>
         <div class="btn-group">
           <button class="btn-tune" data-width="narrow">窄</button>
           <button class="btn-tune" data-width="normal">中</button>
           <button class="btn-tune" data-width="wide">宽</button>
         </div>
       </div>
-      <div class="toolbar-divider"></div>
-      <div class="toolbar-group">
-        <button class="btn-tune bookmark-btn" id="bookmarkBtn" title="收藏本章">
-          <span id="bookmarkIcon">☆</span>
-          <span class="bookmark-label">收藏</span>
-        </button>
+      <button class="btn-tune bookmark-btn" id="bookmarkBtn">
+        <span id="bookmarkIcon">收藏</span>
+      </button>
+    </div>
+
+    <article class="chapter">
+      <header class="chapter-header">
+        <div class="chapter-label" id="chapterMetaLabel"></div>
+        <h1 id="title">加载中</h1>
+        <div class="chapter-date" id="meta"></div>
+      </header>
+
+      <div class="chapter-body" id="content">
+        <p class="loading-text">加载中...</p>
       </div>
-    </div>
+    </article>
 
-    <!-- 章节头部 -->
-    <div class="chapter-header animate-fade-in-up stagger-1">
-      <div class="chapter-meta-label" id="chapterMetaLabel"></div>
-      <h1 id="title">加载中</h1>
-      <div class="meta" id="meta"></div>
-    </div>
+    <nav class="chapter-nav" id="chapterNav">
+      <a href="#" id="prevLink" class="nav-link">上一章</a>
+      <span class="nav-progress" id="progress"></span>
+      <a href="#" id="nextLink" class="nav-link">下一章</a>
+    </nav>
 
-    <!-- 章节内容 -->
-    <div class="chapter-content" id="content">
-      <div class="skeleton-content">
-        {Array.from({ length: 8 }).map(() => (
-          <div class="skeleton-paragraph">
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line"></div>
-          </div>
-        ))}
-      </div>
-    </div>
-
-    <!-- 章节导航 -->
-    <div class="chapter-nav" id="chapterNav">
-      <a href="#" id="prevLink" class="nav-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        <span>上一章</span>
-      </a>
-      <span class="center" id="progress"></span>
-      <a href="#" id="nextLink" class="nav-link">
-        <span>下一章</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </a>
-    </div>
-
-    <!-- 评论区 -->
-    <div class="comments-section" id="commentsSection">
-      <div class="comments-header">
-        <h3>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          评论
-        </h3>
-        <span class="comments-count" id="commentsCount"></span>
-      </div>
+    <section class="comments">
+      <h3 class="comments-title">评论</h3>
       <form class="comment-form" id="commentForm">
         <textarea id="commentInput" placeholder="写下你的想法..." rows="3"></textarea>
-        <div class="comment-form-actions">
-          <button type="submit" class="btn btn-primary btn-small" id="commentBtn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.375rem;">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-            发表评论
-          </button>
-        </div>
+        <button type="submit" class="btn btn-primary btn-small" id="commentBtn">发表</button>
       </form>
       <div class="comments-list" id="commentsList">
         <div class="empty">加载中...</div>
       </div>
-    </div>
+    </section>
   </main>
 
-  <footer class="container-reader">
-    <div class="footer-line"></div>
+  <footer class="container-reader site-footer">
     <p>2026 冰箱里的世界 · 仅供会员阅读</p>
   </footer>
 </Layout>
@@ -159,8 +114,8 @@ const chapterId = Astro.url.searchParams.get('id');
     content.style.fontSize = fontSize + 'rem';
     content.style.lineHeight = lineHeight;
     content.style.fontFamily = fontFamily === 'serif'
-      ? '"Noto Serif SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif'
-      : '"Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif';
+      ? 'var(--font-serif)'
+      : 'var(--font)';
     if (main) {
       main.classList.remove('container-reader', 'container-narrow', 'container-wide');
       if (pageWidth === 'narrow') main.classList.add('container-narrow');
@@ -188,7 +143,7 @@ const chapterId = Astro.url.searchParams.get('id');
     btn.disabled = true;
     const { bookmarked } = await toggleBookmark(currentId);
     isBookmarked = bookmarked;
-    document.getElementById('bookmarkIcon').textContent = bookmarked ? '★' : '☆';
+    document.getElementById('bookmarkIcon').textContent = bookmarked ? '已收藏' : '收藏';
     btn.classList.toggle('active', bookmarked);
     btn.disabled = false;
   });
@@ -203,7 +158,7 @@ const chapterId = Astro.url.searchParams.get('id');
       document.getElementById('content').innerHTML = '<div class="empty">章节不存在或已被删除</div>';
       return;
     }
-    document.title = `第${chapter.order_num}章 ${chapter.title} - 冰箱里的世界`;
+    document.title = `第${chapter.order_num}章 ${chapter.title}`;
     document.getElementById('chapterMetaLabel').textContent = `第 ${chapter.order_num} 章`;
     document.getElementById('title').textContent = chapter.title;
     document.getElementById('meta').textContent = formatDate(chapter.created_at);
@@ -214,14 +169,14 @@ const chapterId = Astro.url.searchParams.get('id');
     if (savedProgress > 100) setTimeout(() => window.scrollTo({ top: savedProgress, behavior: 'smooth' }), 300);
     const prevLink = document.getElementById('prevLink');
     const nextLink = document.getElementById('nextLink');
-    if (currentIndex > 0) { prevLink.href = `/read?id=${allChapters[currentIndex - 1].id}`; prevLink.classList.remove('disabled'); prevLink.querySelector('span').textContent = '上一章'; }
-    else { prevLink.classList.add('disabled'); prevLink.querySelector('span').textContent = '已是第一章'; prevLink.href = '#'; }
-    if (currentIndex < allChapters.length - 1) { nextLink.href = `/read?id=${allChapters[currentIndex + 1].id}`; nextLink.classList.remove('disabled'); nextLink.querySelector('span').textContent = '下一章'; }
-    else { nextLink.classList.add('disabled'); nextLink.querySelector('span').textContent = '已是最后一章'; nextLink.href = '#'; }
+    if (currentIndex > 0) { prevLink.href = `/read?id=${allChapters[currentIndex - 1].id}`; prevLink.classList.remove('disabled'); }
+    else { prevLink.classList.add('disabled'); prevLink.href = '#'; }
+    if (currentIndex < allChapters.length - 1) { nextLink.href = `/read?id=${allChapters[currentIndex + 1].id}`; nextLink.classList.remove('disabled'); }
+    else { nextLink.classList.add('disabled'); nextLink.href = '#'; }
     document.getElementById('progress').textContent = `${currentIndex + 1} / ${allChapters.length}`;
     const { data: bookmarks } = await getBookmarks();
     isBookmarked = (bookmarks || []).some(b => b.chapter_id === currentId);
-    document.getElementById('bookmarkIcon').textContent = isBookmarked ? '★' : '☆';
+    document.getElementById('bookmarkIcon').textContent = isBookmarked ? '已收藏' : '收藏';
     document.getElementById('bookmarkBtn').classList.toggle('active', isBookmarked);
     loadComments();
   }
@@ -236,17 +191,14 @@ const chapterId = Astro.url.searchParams.get('id');
   async function loadComments() {
     const list = document.getElementById('commentsList');
     const { data: comments, error } = await getComments(currentId);
-    document.getElementById('commentsCount').textContent = comments?.length ? `${comments.length} 条` : '';
-    if (error) { list.innerHTML = '<div class="empty">评论加载失败</div>'; return; }
-    if (!comments || comments.length === 0) { list.innerHTML = '<div class="empty">暂无评论，来发表第一条吧</div>'; return; }
-    list.innerHTML = comments.map((c, i) => `
-      <div class="comment-item" data-id="${c.id}" style="animation-delay: ${i * 0.05}s">
+    if (error) { list.innerHTML = '<div class="empty">加载失败</div>'; return; }
+    if (!comments || comments.length === 0) { list.innerHTML = '<div class="empty">暂无评论</div>'; return; }
+    list.innerHTML = comments.map(c => `
+      <div class="comment-item" data-id="${c.id}">
         <div class="comment-header">
-          <div class="comment-author-info">
-            <span class="comment-author">${escapeHtml(c.reader_id)}</span>
-            <span class="comment-time">${formatDate(c.created_at)}</span>
-          </div>
-          ${(c.user_id === myUserId || isAdmin) ? `<button class="comment-delete" data-id="${c.id}" title="删除">删除</button>` : ''}
+          <span class="comment-author">${escapeHtml(c.reader_id)}</span>
+          <span class="comment-time">${formatDate(c.created_at)}</span>
+          ${(c.user_id === myUserId || isAdmin) ? `<button class="comment-delete" data-id="${c.id}">删除</button>` : ''}
         </div>
         <div class="comment-body">${escapeHtml(c.content)}</div>
       </div>
@@ -254,7 +206,7 @@ const chapterId = Astro.url.searchParams.get('id');
     list.querySelectorAll('.comment-delete').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!confirm('确定要删除这条评论吗？')) return;
+        if (!confirm('确定删除？')) return;
         const commentId = btn.dataset.id;
         const commentData = comments.find(c => c.id === commentId);
         if (commentData?.user_id === myUserId) await deleteComment(commentId);
@@ -271,12 +223,12 @@ const chapterId = Astro.url.searchParams.get('id');
     const content = input.value.trim();
     if (!content) return;
     btn.disabled = true;
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.375rem; animation: spin 0.6s linear infinite;"><polyline points="23 4 23 10 17 10"/></svg>发表中...`;
+    btn.textContent = '发表中...';
     const { error } = await addComment(currentId, content);
     if (error) alert('评论失败：' + error.message);
     else { input.value = ''; loadComments(); }
     btn.disabled = false;
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.375rem;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>发表评论`;
+    btn.textContent = '发表';
   });
 
   function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
@@ -284,298 +236,145 @@ const chapterId = Astro.url.searchParams.get('id');
 </script>
 
 <style>
-  /* 阅读工具栏 */
-  .reader-toolbar {
+  .toolbar {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.25rem;
-    padding: 1.25rem 0;
-    border-bottom: 1.5px solid var(--border-color);
-    margin-bottom: 2.5rem;
-    font-size: 0.8125rem;
-    color: var(--text-dim);
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+    font-size: 12px;
+    color: var(--text-tertiary);
     align-items: center;
   }
-
-  .toolbar-group { display: flex; align-items: center; gap: 0.625rem; }
-  .toolbar-group label { color: var(--text-muted); white-space: nowrap; font-size: 0.75rem; letter-spacing: 0.05em; }
-  .btn-group { display: flex; gap: 0.375rem; }
-
+  .toolbar-group { display: flex; align-items: center; gap: 6px; }
+  .toolbar-group label { white-space: nowrap; }
+  .btn-group { display: flex; gap: 4px; }
   .btn-tune {
-    background: var(--bg-tertiary);
-    border: 1.5px solid var(--border-color);
-    color: var(--text-muted);
-    padding: 0.375rem 0.75rem;
-    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 3px 10px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 12px;
     font-family: inherit;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
+    transition: all 0.2s;
   }
+  .btn-tune:hover { border-color: var(--border-hover); color: var(--text); }
+  .bookmark-btn { margin-left: auto; }
+  .bookmark-btn.active { color: var(--accent); border-color: var(--accent); }
 
-  .btn-tune:hover {
-    border-color: var(--accent-dim);
-    color: var(--accent-light);
-    background: var(--accent-pale);
-    box-shadow: 0 0 12px var(--accent-glow);
-  }
-
-  .btn-tune:active {
-    transform: scale(0.95);
-  }
-
-  .bookmark-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 1rem;
-    font-size: 0.8125rem;
-  }
-
-  .bookmark-btn.active {
-    color: var(--accent-light);
-    border-color: var(--accent-dim);
-    background: var(--accent-pale);
-    box-shadow: 0 0 16px var(--accent-glow);
-  }
-
-  .bookmark-label {
-    font-size: 0.75rem;
-  }
-
-  .toolbar-divider {
-    width: 1px;
-    height: 24px;
-    background: var(--border-color);
-    margin: 0 0.25rem;
-  }
-
-  /* 骨架屏内容 */
-  .skeleton-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    padding: 2rem 0;
-  }
-
-  .skeleton-paragraph {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .skeleton-paragraph .skeleton-line {
-    height: 16px;
-    border-radius: 8px;
-    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-  }
-
-  .skeleton-paragraph:last-child .skeleton-line:last-child {
-    width: 60%;
-  }
-
-  /* 章节头部 */
   .chapter-header {
-    padding: 2rem 0 3rem;
+    padding: 32px 0 40px;
     text-align: center;
-    border-bottom: 1.5px solid var(--border-color);
-    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
   }
-
-  .chapter-meta-label {
-    display: inline-block;
-    padding: 0.375rem 1rem;
-    background: var(--accent-pale);
-    border: 1px solid rgba(124, 58, 237, 0.15);
-    border-radius: 100px;
-    font-size: 0.75rem;
-    color: var(--accent-light);
+  .chapter-label {
+    font-size: 12px;
+    color: var(--accent);
     letter-spacing: 0.1em;
-    margin-bottom: 1.25rem;
-    font-weight: 500;
+    margin-bottom: 12px;
   }
-
   .chapter-header h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 0.75rem;
-    letter-spacing: -0.02em;
-    line-height: 1.3;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .chapter-date {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.05em;
   }
 
-  .chapter-header .meta {
-    font-size: 0.8125rem;
-    color: var(--text-faint);
-    letter-spacing: 0.08em;
+  .chapter-body {
+    padding-bottom: 48px;
+    font-family: var(--font-serif);
   }
-
-  /* 章节内容 */
-  .chapter-content {
-    padding-bottom: 4rem;
-    font-family: "Noto Serif SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
-    line-height: 2;
-  }
-
-  .chapter-content p {
-    margin-bottom: 1.75rem;
+  .chapter-body p {
+    margin-bottom: 1.75em;
     text-indent: 2em;
     line-height: inherit;
-    transition: opacity 0.3s ease;
+  }
+  .loading-text {
+    text-align: center;
+    color: var(--text-tertiary);
+    text-indent: 0;
   }
 
-  .container-narrow { max-width: 520px; margin: 0 auto; padding: 0 2rem; }
-  .container-wide { max-width: 860px; margin: 0 auto; padding: 0 2rem; }
+  .container-narrow { max-width: 480px; margin: 0 auto; padding: 0 24px; }
+  .container-wide { max-width: 780px; margin: 0 auto; padding: 0 24px; }
 
-  /* 章节导航 */
   .chapter-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 2rem 0;
-    border-top: 1.5px solid var(--border-color);
-    border-bottom: 1.5px solid var(--border-color);
-    margin-bottom: 3rem;
+    padding: 24px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
   }
-
   .nav-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     text-decoration: none;
-    font-size: 0.875rem;
+    font-size: 14px;
+    transition: color 0.2s;
+  }
+  .nav-link:hover { color: var(--text); }
+  .nav-link.disabled { color: var(--text-dim); pointer-events: none; }
+  .nav-progress { font-size: 12px; color: var(--text-tertiary); }
+
+  .comments { margin-bottom: 48px; }
+  .comments-title {
+    font-size: 16px;
     font-weight: 500;
-    transition: all 0.3s ease;
-    padding: 0.5rem 0;
+    margin-bottom: 20px;
   }
-
-  .nav-link:hover { color: var(--accent-light); text-shadow: 0 0 8px var(--accent-glow); }
-  .nav-link.disabled { color: var(--text-faint); cursor: default; pointer-events: none; }
-  .chapter-nav .center { color: var(--text-faint); font-size: 0.8125rem; letter-spacing: 0.1em; }
-
-  /* 评论区 */
-  .comments-section { margin-bottom: 4rem; }
-
-  .comments-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-  }
-
-  .comments-section h3 {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .comments-count {
-    font-size: 0.75rem;
-    color: var(--text-faint);
-    letter-spacing: 0.05em;
-  }
-
-  .comment-form { margin-bottom: 2rem; }
-  .comment-form textarea { margin-bottom: 0.75rem; }
-
-  .comment-form-actions {
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .comments-list { display: flex; flex-direction: column; gap: 0.75rem; }
-
+  .comment-form { margin-bottom: 24px; }
+  .comment-form textarea { margin-bottom: 10px; }
+  .comments-list { display: flex; flex-direction: column; gap: 2px; }
   .comment-item {
-    padding: 1.25rem 1.5rem;
-    background: var(--bg-card);
-    border: 1.5px solid var(--border-color);
-    border-radius: var(--radius);
-    transition: all 0.3s ease;
-    animation: fadeInUp 0.4s ease-out both;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
   }
-
-  .comment-item:hover { border-color: var(--border-hover); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08); }
-
+  .comment-item:last-child { border-bottom: none; }
   .comment-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
+    gap: 10px;
+    margin-bottom: 6px;
   }
-
-  .comment-author-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
   .comment-author {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--accent-light);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
   }
-
-  .comment-time { font-size: 0.75rem; color: var(--text-faint); letter-spacing: 0.02em; }
-
+  .comment-time {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
   .comment-delete {
+    margin-left: auto;
     background: none;
-    border: 1px solid transparent;
-    color: var(--text-faint);
-    font-size: 0.75rem;
+    border: none;
+    color: var(--text-dim);
+    font-size: 11px;
     cursor: pointer;
-    padding: 0.375rem 0.625rem;
-    transition: all 0.25s ease;
-    border-radius: 6px;
-    font-family: inherit;
+    padding: 2px 6px;
+    transition: color 0.2s;
   }
-
-  .comment-delete:hover { color: var(--error); background: var(--error-bg); border-color: rgba(239, 68, 68, 0.15); }
-
+  .comment-delete:hover { color: #ef4444; }
   .comment-body {
-    font-size: 0.9375rem;
+    font-size: 14px;
     color: var(--text-secondary);
     line-height: 1.7;
   }
 
-  /* Footer */
-  footer {
-    padding: 3rem 0;
-    text-align: center;
-  }
-
-  .footer-line {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
-    margin-bottom: 2rem;
-  }
-
-  footer p {
-    font-size: 0.75rem;
-    color: var(--text-faint);
-    letter-spacing: 0.08em;
-  }
-
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-
   @media (max-width: 640px) {
-    .reader-toolbar { gap: 0.875rem; font-size: 0.75rem; padding: 1rem 0; }
-    .toolbar-divider { display: none; }
-    .bookmark-label { display: none; }
-    .container-reader, .container-narrow, .container-wide { padding: 0 1.25rem; }
-    .chapter-header h1 { font-size: 1.5rem; }
-    .chapter-meta-label { font-size: 0.6875rem; }
-    .nav-link { font-size: 0.8125rem; }
+    .container-reader, .container-narrow, .container-wide { padding: 0 18px; }
+    .chapter-header h1 { font-size: 20px; }
+    .toolbar { gap: 12px; }
   }
 </style>
