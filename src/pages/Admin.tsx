@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, FileText, Users, MessageSquare, Key, BarChart3, Plus, Edit, Trash2, Loader2, Check, Volume2, Megaphone, Eye, EyeOff } from "lucide-react";
 import { supabase, type Novel, type Chapter, type InviteCode, type Announcement } from "@/lib/supabase";
+import CommentsAdmin from "./admin/CommentsAdmin";
+import ReadersAdmin from "./admin/ReadersAdmin";
 
-type Tab = "dashboard" | "novels" | "chapters" | "announcements" | "readers" | "invites";
+type Tab = "dashboard" | "novels" | "chapters" | "announcements" | "comments" | "readers" | "invites";
 
 export default function Admin() {
   const [user, setUser] = useState<any>(null);
@@ -31,6 +33,7 @@ export default function Admin() {
     { key: "novels" as Tab, label: "作品", icon: <BookOpen className="w-4 h-4" /> },
     { key: "chapters" as Tab, label: "章节", icon: <FileText className="w-4 h-4" /> },
     { key: "announcements" as Tab, label: "公告", icon: <Megaphone className="w-4 h-4" /> },
+    { key: "comments" as Tab, label: "评论", icon: <MessageSquare className="w-4 h-4" /> },
     { key: "readers" as Tab, label: "读者", icon: <Users className="w-4 h-4" /> },
     { key: "invites" as Tab, label: "邀请码", icon: <Key className="w-4 h-4" /> },
   ];
@@ -48,6 +51,7 @@ export default function Admin() {
       {tab === "novels" && <NovelsAdmin />}
       {tab === "chapters" && <ChaptersAdmin />}
       {tab === "announcements" && <AnnouncementsAdmin />}
+      {tab === "comments" && <CommentsAdmin />}
       {tab === "readers" && <ReadersAdmin />}
       {tab === "invites" && <InvitesAdmin />}
     </div>
@@ -83,7 +87,7 @@ function DashboardTab() {
 }
 
 function generateSlug(title: string): string {
-  return title.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
+  return title.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, "-").replace(/^-+|$/g, "") || "untitled";
 }
 
 function NovelsAdmin() {
@@ -256,53 +260,6 @@ function AnnouncementsAdmin() {
         {announcements.map(a => <div key={a.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg"><div className="min-w-0 flex-1"><div className="flex items-center gap-2 mb-1"><span className={`text-[10px] px-1.5 py-0.5 rounded ${a.active?"bg-[#1a2a1a] text-[#7c9a6e]":"bg-[#2a2a2a] text-[#666]"}`}>{a.active?"显示中":"已隐藏"}</span><span className="text-[#444] text-xs">{new Date(a.created_at).toLocaleDateString("zh-CN")}</span></div><p className="text-[#aaa] text-sm">{a.content}</p></div><div className="flex items-center gap-1 flex-shrink-0 ml-4"><button onClick={() => toggleActive(a)} className="p-1.5 text-[#555] hover:text-white transition-colors" title={a.active?"隐藏":"显示"}><Volume2 className="w-3.5 h-3.5" /></button><button onClick={() => { setEditing(a); setContent(a.content); setActive(a.active); setShowForm(true); }} className="p-1.5 text-[#555] hover:text-white transition-colors"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => del(a.id)} className="p-1.5 text-[#555] hover:text-[#c44444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button></div></div>)}
         {announcements.length === 0 && <div className="text-center py-12 text-[#555] text-sm">暂无公告</div>}
       </div>
-    </div>
-  );
-}
-
-function ReadersAdmin() {
-  const [readers, setReaders] = useState<any[]>([]);
-  const [codes, setCodes] = useState<InviteCode[]>([]);
-
-  const load = () => {
-    supabase.from("profiles").select("*").order("created_at", { ascending: false }).then(({ data: profiles }) => {
-      if (!profiles) { setReaders([]); return; }
-      supabase.from("invite_codes").select("*").not("used_by", "is", null).then(({ data: usedCodes }) => {
-        const readersWithCode = profiles.map(p => {
-          const usedCode = usedCodes?.find(c => c.used_by === p.id);
-          return { ...p, invite_code: usedCode?.code ?? "-" };
-        });
-        setReaders(readersWithCode);
-      });
-    });
-    supabase.from("invite_codes").select("*").order("created_at", { ascending: false }).then(({ data }) => { if (data) setCodes(data); });
-  };
-  useEffect(() => { load(); }, []);
-
-  return (
-    <div>
-      <div className="flex gap-4 mb-6">
-        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">总读者</p><p className="text-xl font-semibold text-white">{readers.length}</p></div>
-        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">已用邀请码</p><p className="text-xl font-semibold text-white">{codes.filter(c => c.used).length}</p></div>
-        <div className="bg-[#111] border border-[#1a1a1a] rounded-lg px-4 py-3"><p className="text-[#555] text-xs">剩余邀请码</p><p className="text-xl font-semibold text-white">{codes.filter(c => !c.used).length}</p></div>
-      </div>
-
-      <div className="space-y-2">
-        {readers.map(r => (
-          <div key={r.id} className="py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-white text-sm font-medium">{r.display_name ?? r.reader_id}</p>
-              <span className="text-[#444] text-xs">{new Date(r.created_at).toLocaleDateString("zh-CN")}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <p className="text-[#555]"><span className="text-[#444]">ID:</span> {r.reader_id}</p>
-              <p className="text-[#555]"><span className="text-[#444]">邮箱:</span> {r.email ?? "-"}</p>
-              <p className="text-[#555] col-span-2"><span className="text-[#444]">邀请码:</span> <span className="font-mono">{r.invite_code}</span></p>
-            </div>
-          </div>
-        ))}
-      </div>
-      {readers.length === 0 && <div className="text-center py-12 text-[#555] text-sm">暂无读者</div>}
     </div>
   );
 }
