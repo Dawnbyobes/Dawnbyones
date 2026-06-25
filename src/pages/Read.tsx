@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Settings, MessageSquare, List, X, Send, BookOpen, LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, MessageSquare, List, X, Send, BookOpen, LogOut, Loader2 } from "lucide-react";
 import { supabase, type Chapter, type Novel, type Comment } from "@/lib/supabase";
 
 type Theme = "dark" | "light" | "sepia" | "green";
@@ -28,6 +28,7 @@ export default function Read() {
   const [allChapters, setAllChapters] = useState<Pick<Chapter, "id" | "title" | "order_num">[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem("rt") as Theme) ?? "dark");
   const [font, setFont] = useState<Font>(() => (localStorage.getItem("rf") as Font) ?? "serif");
@@ -37,6 +38,7 @@ export default function Read() {
   const [showCmt, setShowCmt] = useState(false);
   const [showTOC, setShowTOC] = useState(false);
   const [cmtText, setCmtText] = useState("");
+  const [cmtError, setCmtError] = useState("");
   const [currentIdx, setCurrentIdx] = useState(0);
 
   const c = TC[theme];
@@ -47,11 +49,24 @@ export default function Read() {
   }, [theme, font, fontSize, lineHeight]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, []);
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        navigate("/login");
+        return;
+      }
+      supabase.from("invite_codes").select("*").eq("used_by", data.user.id).limit(1).then(({ data: codes }) => {
+        if (!codes || codes.length === 0) {
+          navigate("/login");
+          return;
+        }
+        setUser(data.user);
+        setAuthChecked(true);
+      });
+    });
+  }, [navigate]);
 
   useEffect(() => {
-    if (!chapterId) return;
+    if (!authChecked || !chapterId) return;
     supabase.from("chapters").select("*").eq("id", chapterId).single().then(({ data: ch }) => {
       if (!ch) return;
       setChapter(ch);
@@ -62,12 +77,16 @@ export default function Read() {
       supabase.from("chapters").select("id,title,order_num").eq("novel_id", ch.novel_id).eq("status", "published").order("order_num").then(({ data: chs }) => {
         if (chs) { setAllChapters(chs); setCurrentIdx(chs.findIndex(x => x.id === chapterId)); }
       });
-      supabase.from("comments").select("*").eq("chapter_id", chapterId).order("created_at", { ascending: false }).then(({ data: cms }) => {
-        if (cms) setComments(cms);
-      });
+      loadComments(chapterId);
     });
     return () => { document.title = "冰箱里的世界"; };
-  }, [chapterId]);
+  }, [chapterId, authChecked]);
+
+  const loadComments = (cid: string) => {
+    supabase.from("comments").select("*").eq("chapter_id", cid).order("created_at", { ascending: false }).then(({ data: cms }) => {
+      if (cms) setComments(cms);
+    });
+  };
 
   const prev = currentIdx > 0 ? allChapters[currentIdx - 1] : null;
   const next = currentIdx < allChapters.length - 1 ? allChapters[currentIdx + 1] : null;
@@ -82,12 +101,22 @@ export default function Read() {
 
   const sendCmt = async () => {
     if (!cmtText.trim() || !user || !chapterId) return;
-    await supabase.from("comments").insert({ chapter_id: chapterId, user_id: user.id, user_name: user.user_metadata?.name ?? user.email ?? "匿名", content: cmtText.trim() });
+    setCmtError("");
+    const { error: insErr } = await supabase.from("comments").insert({
+      chapter_id: chapterId,
+      user_id: user.id,
+      user_name: user.user_metadata?.name ?? user.email ?? "匿名",
+      content: cmtText.trim(),
+    });
+    if (insErr) {
+      setCmtError("发送失败: " + insErr.message);
+      return;
+    }
     setCmtText("");
-    const { data } = await supabase.from("comments").select("*").eq("chapter_id", chapterId).order("created_at", { ascending: false });
-    if (data) setComments(data);
+    loadComments(chapterId);
   };
 
+  if (!authChecked) return <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]"><Loader2 className="w-5 h-5 animate-spin text-[#555]" /></div>;
   if (!chapter) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: c.bg }}><div className="animate-pulse text-[#555]">加载中...</div></div>;
   const paragraphs = chapter.content.split("\n").filter(p => p.trim());
 
@@ -150,7 +179,8 @@ export default function Read() {
             <div className="flex items-center justify-between mb-4"><h3 className="text-sm font-medium" style={{ color: c.heading }}>评论 ({comments.length})</h3><button onClick={() => setShowCmt(false)} className="p-1" style={{ color: c.nav }}><X className="w-4 h-4" /></button></div>
             {user && (
               <div className="mb-4">
-                <textarea value={cmtText} onChange={e => setCmtText(e.target.value)} placeholder="写下你的想法..." className="w-full rounded-md border p-2.5 text-sm resize-none focus:outline-none" style={{ backgroundColor: c.bg, borderColor: c.border, color: c.text }} rows={3} />
+                <textarea value={cmtText} onChange={e => { setCmtText(e.target.value); setCmtError(""); }} placeholder="写下你的想法..." className="w-full rounded-md border p-2.5 text-sm resize-none focus:outline-none" style={{ backgroundColor: c.bg, borderColor: c.border, color: c.text }} rows={3} />
+                {cmtError && <p className="text-[#c44444] text-xs mt-1.5">{cmtError}</p>}
                 <button onClick={sendCmt} disabled={!cmtText.trim()} className="mt-2 w-full py-2 bg-white text-[#0a0a0a] rounded-md text-xs font-medium hover:opacity-85 transition-opacity disabled:opacity-40 flex items-center justify-center gap-1"><Send className="w-3 h-3" />发送</button>
               </div>
             )}
