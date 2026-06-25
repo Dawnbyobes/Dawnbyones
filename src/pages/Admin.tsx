@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, FileText, Users, MessageSquare, Key, BarChart3, Plus, Edit, Trash2, Loader2, Check, Volume2, Megaphone } from "lucide-react";
+import { BookOpen, FileText, Users, MessageSquare, Key, BarChart3, Plus, Edit, Trash2, Loader2, Check, Volume2, Megaphone, Eye, EyeOff } from "lucide-react";
 import { supabase, type Novel, type Chapter, type InviteCode, type Announcement } from "@/lib/supabase";
 
 type Tab = "dashboard" | "novels" | "chapters" | "announcements" | "readers" | "invites";
@@ -82,55 +82,82 @@ function DashboardTab() {
   );
 }
 
+// 从标题自动生成 URL 标识
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\u4e00-\u9fff]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    || "untitled";
+}
+
 function NovelsAdmin() {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Novel | null>(null);
-  const [form, setForm] = useState({ title: "", slug: "", description: "", cover: "", category: "", tags: "", status: "ongoing" as "ongoing"|"completed"|"paused", author_note: "" });
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [status, setStatus] = useState<"ongoing"|"completed"|"paused">("ongoing");
+  const [publishNow, setPublishNow] = useState(true);
+  const [error, setError] = useState("");
 
   const load = () => supabase.from("novels").select("*").order("updated_at", { ascending: false }).then(({ data }) => { if (data) setNovels(data); });
   useEffect(() => { load(); }, []);
 
-  const reset = () => { setForm({ title: "", slug: "", description: "", cover: "", category: "", tags: "", status: "ongoing", author_note: "" }); setEditing(null); };
+  const reset = () => { setTitle(""); setDescription(""); setCategory(""); setStatus("ongoing"); setPublishNow(true); setEditing(null); setError(""); };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title || !form.slug) return;
+    if (!title.trim()) { setError("请输入作品标题"); return; }
+    const slug = generateSlug(title.trim());
     const now = new Date().toISOString();
-    if (editing) {
-      await supabase.from("novels").update({ ...form, updated_at: now }).eq("id", editing.id);
-    } else {
-      await supabase.from("novels").insert({ ...form, word_count: 0, chapter_count: 0, is_published: false, updated_at: now });
+    setError("");
+    try {
+      if (editing) {
+        const { error: updErr } = await supabase.from("novels").update({ 
+          title: title.trim(), description: description || null, category: category || null, status, updated_at: now 
+        }).eq("id", editing.id);
+        if (updErr) { setError(updErr.message); return; }
+      } else {
+        const { error: insErr } = await supabase.from("novels").insert({ 
+          title: title.trim(), slug, description: description || null, category: category || null, status, 
+          word_count: 0, chapter_count: 0, is_published: publishNow, updated_at: now 
+        });
+        if (insErr) { setError("创建失败: " + insErr.message); return; }
+      }
+      reset(); setShowForm(false); load();
+    } catch (err: any) {
+      setError(err.message || "操作失败");
     }
-    reset(); setShowForm(false); load();
   };
 
   const del = async (id: number) => { if (!confirm("确定删除？")) return; await supabase.from("novels").delete().eq("id", id); load(); };
+  const togglePublish = async (n: Novel) => { await supabase.from("novels").update({ is_published: !n.is_published, updated_at: new Date().toISOString() }).eq("id", n.id); load(); };
 
   return (
     <div>
       <div className="flex justify-between mb-4"><span className="text-sm text-[#555]">{novels.length} 部作品</span><button onClick={() => { reset(); setShowForm(!showForm); }} className="flex items-center gap-1 px-3 py-1.5 bg-white text-[#0a0a0a] rounded-md text-xs font-medium hover:opacity-85 transition-opacity"><Plus className="w-3.5 h-3.5" />新增作品</button></div>
       {showForm && (
         <form onSubmit={submit} className="bg-[#111] border border-[#1a1a1a] rounded-lg p-4 mb-6 space-y-3">
+          <input placeholder="作品标题 *" value={title} onChange={e => { setTitle(e.target.value); setError(""); }} required className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444]" />
+          <textarea placeholder="简介（可选）" value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444] resize-none" />
           <div className="grid sm:grid-cols-2 gap-3">
-            <input placeholder="作品标题 *" value={form.title} onChange={e => setForm({...form,title:e.target.value})} required className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444]" />
-            <input placeholder="URL标识 *" value={form.slug} onChange={e => setForm({...form,slug:e.target.value})} required className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444]" />
+            <input placeholder="分类（如：科幻、言情）" value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444]" />
+            <select value={status} onChange={e => setStatus(e.target.value as any)} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-[#444]"><option value="ongoing">连载中</option><option value="completed">已完结</option><option value="paused">暂停</option></select>
           </div>
-          <textarea placeholder="简介" value={form.description} onChange={e => setForm({...form,description:e.target.value})} rows={2} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444] resize-none" />
-          <div className="grid sm:grid-cols-2 gap-3">
-            <input placeholder="封面 URL" value={form.cover} onChange={e => setForm({...form,cover:e.target.value})} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444]" />
-            <input placeholder="分类" value={form.category} onChange={e => setForm({...form,category:e.target.value})} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444]" />
-          </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <input placeholder="标签（逗号分隔）" value={form.tags} onChange={e => setForm({...form,tags:e.target.value})} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444]" />
-            <select value={form.status} onChange={e => setForm({...form,status:e.target.value as any})} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-[#444]"><option value="ongoing">连载中</option><option value="completed">已完结</option><option value="paused">暂停</option></select>
-          </div>
-          <textarea placeholder="作者的话" value={form.author_note} onChange={e => setForm({...form,author_note:e.target.value})} rows={2} className="w-full bg-[#0a0a0a] border border-[#222] rounded-md px-3 py-2 text-sm text-white placeholder:text-[#444] focus:outline-none focus:border-[#444] resize-none" />
+          {!editing && (
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="publish" checked={publishNow} onChange={e => setPublishNow(e.target.checked)} className="w-4 h-4 accent-white" />
+              <label htmlFor="publish" className="text-sm text-[#aaa]">创建后立即发布（读者可见）</label>
+            </div>
+          )}
+          {error && <p className="text-[#c44444] text-xs">{error}</p>}
           <div className="flex gap-2"><button type="submit" className="px-4 py-2 bg-white text-[#0a0a0a] rounded-md text-xs font-medium hover:opacity-85 transition-opacity">{editing ? "更新" : "创建"}</button><button type="button" onClick={() => { reset(); setShowForm(false); }} className="px-4 py-2 border border-[#333] text-[#888] rounded-md text-xs hover:border-[#555] hover:text-white transition-colors">取消</button></div>
         </form>
       )}
       <div className="space-y-2">
-        {novels.map(n => <div key={n.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg"><div className="min-w-0 flex-1"><p className="text-white text-sm font-medium truncate">{n.title}</p><p className="text-[#555] text-xs">/{n.slug} · {n.chapter_count}章 · {n.is_published ? "已发布" : "未发布"}</p></div><div className="flex items-center gap-1 flex-shrink-0 ml-4"><button onClick={() => { setEditing(n); setForm({ title: n.title, slug: n.slug, description: n.description??"", cover: n.cover??"", category: n.category??"", tags: n.tags??"", status: n.status, author_note: n.author_note??"" }); setShowForm(true); }} className="p-1.5 text-[#555] hover:text-white transition-colors"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => del(n.id)} className="p-1.5 text-[#555] hover:text-[#c44444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button></div></div>)}
+        {novels.map(n => <div key={n.id} className="flex items-center justify-between py-3 px-4 bg-[#111] border border-[#1a1a1a] rounded-lg"><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="text-white text-sm font-medium truncate">{n.title}</p><span className={`text-[10px] px-1.5 py-0.5 rounded ${n.is_published?"bg-[#1a2a1a] text-[#7c9a6e]":"bg-[#2a2a2a] text-[#666]"}`}>{n.is_published?"已发布":"未发布"}</span><span className={`text-[10px] px-1.5 py-0.5 rounded ${n.status==="ongoing"?"bg-[#1a1a2a] text-[#7e8aad]":n.status==="completed"?"bg-[#2a1a1a] text-[#ad8a7e]":"bg-[#2a2a1a] text-[#9a9a6e]"}`}>{n.status==="ongoing"?"连载中":n.status==="completed"?"已完结":"暂停"}</span></div><p className="text-[#555] text-xs">{n.chapter_count}章 · {n.category ?? "未分类"}</p></div><div className="flex items-center gap-1 flex-shrink-0 ml-4"><button onClick={() => togglePublish(n)} className="p-1.5 text-[#555] hover:text-white transition-colors" title={n.is_published?"下架":"发布"}>{n.is_published?<EyeOff className="w-3.5 h-3.5" />:<Eye className="w-3.5 h-3.5" />}</button><button onClick={() => { setEditing(n); setTitle(n.title); setDescription(n.description??""); setCategory(n.category??""); setStatus(n.status); setShowForm(true); }} className="p-1.5 text-[#555] hover:text-white transition-colors"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => del(n.id)} className="p-1.5 text-[#555] hover:text-[#c44444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button></div></div>)}
       </div>
     </div>
   );
